@@ -1,0 +1,20 @@
+{
+  "openai": "2.54.0",
+  "results": [
+    {
+      "case": "text_control",
+      "passed": true,
+      "http_calls": 1
+    },
+    {
+      "case": "tool_schema",
+      "passed": true,
+      "http_calls": 1
+    },
+    {
+      "case": "nested_history",
+      "passed": true,
+      "http_calls": 1
+    }
+  ]
+}
