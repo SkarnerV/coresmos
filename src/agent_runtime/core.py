@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Callable
 
+from agent_runtime.context.budget import ExecutionBudgetLedger, execution_budget
 from agent_runtime.contracts import (
     CompletedEntry,
     CompletionCommand,
@@ -15,7 +16,6 @@ from agent_runtime.contracts import (
     ModelCompleted,
     ModelEntry,
     PendingRef,
-    PreparedStep,
     RunRequest,
     RuntimeEvent,
     RunWaiting,
@@ -34,12 +34,14 @@ async def iterate_strict[T](
     stream: ManagedEventStream[T],
     is_completion: Callable[[T], bool],
     scope: RunScope,
+    *,
+    idle_timeout: float | None = None,
 ) -> AsyncIterator[T]:
     """Yield events immediately. Completion must be last; drain trailing events as errors."""
     completion: T | None = None
     last: T | None = None
     try:
-        async for item in iterate_cancellable(stream, scope.control, scope, idle_timeout=None):
+        async for item in iterate_cancellable(stream, scope.control, scope, idle_timeout=idle_timeout):
             if completion is not None:
                 raise CompletionProtocolError("trailing event after completion")
             if is_completion(item):
@@ -64,11 +66,13 @@ async def consume_strict[T](
     stream: ManagedEventStream[T],
     is_completion: Callable[[T], bool],
     scope: RunScope,
+    *,
+    idle_timeout: float | None = None,
 ) -> tuple[T, tuple[T, ...]]:
     """Exactly one completion event, last item; drain after it to reject trailing events."""
     items: list[T] = []
     completion: T | None = None
-    async for item in iterate_strict(stream, is_completion, scope):
+    async for item in iterate_strict(stream, is_completion, scope, idle_timeout=idle_timeout):
         items.append(item)
         if is_completion(item):
             completion = item
@@ -85,11 +89,16 @@ class AgentLoop:
         scope: RunScope,
         limits: ExecutionLimits,
         consumed: ConsumedBudget,
+        budget: ExecutionBudgetLedger | None = None,
+        phase_idle_timeout: float | None = None,
     ) -> None:
         self._ports = ports
         self._scope = scope
         self._limits = limits
         self._consumed = consumed
+        self._budget = budget if budget is not None else execution_budget(limits, consumed)
+        # Tool and completion streams are silent while a slow call runs, so this stays opt-in.
+        self._phase_idle_timeout = phase_idle_timeout
 
     async def run(self, request: RunRequest) -> AsyncIterator[RuntimeEvent]:
         entry = request.entry
@@ -97,7 +106,6 @@ class AgentLoop:
             return
         step_no = self._consumed.steps
         model_rounds = self._consumed.model_rounds
-        estimated_tokens = self._consumed.estimated_tokens
 
         async def allocate(*, consume_model: bool) -> StepIdentity:
             nonlocal step_no, model_rounds
@@ -107,23 +115,15 @@ class AgentLoop:
             if consume_model:
                 if self._limits.recovery.remaining_attempts <= 0:
                     raise BudgetExhaustedError("remaining_attempts exhausted")
-                if (
-                    self._limits.max_estimated_tokens is not None
-                    and estimated_tokens >= self._limits.max_estimated_tokens
-                ):
-                    raise BudgetExhaustedError("max_estimated_tokens exhausted")
+                # Each attempt reserves its own estimate in the model pipeline; reject a restore
+                # entry that is already over budget before preparing anything.
+                self._budget.raise_if_exhausted()
                 if self._limits.max_model_rounds is not None and model_rounds + 1 > self._limits.max_model_rounds:
                     raise BudgetExhaustedError("max_model_rounds exhausted")
             step_no += 1
             if consume_model:
                 model_rounds += 1
             return StepIdentity(run_id=request.run_id, step_no=step_no, model_round=model_rounds)
-
-        def consume_estimated(prepared: PreparedStep) -> None:
-            nonlocal estimated_tokens
-            estimated_tokens += prepared.estimated_tokens
-            if self._limits.max_estimated_tokens is not None and estimated_tokens > self._limits.max_estimated_tokens:
-                raise BudgetExhaustedError("max_estimated_tokens exhausted")
 
         if isinstance(entry, ToolBatchEntry):
             identity = await allocate(consume_model=False)
@@ -147,6 +147,7 @@ class AgentLoop:
                 self._ports.tools.execute(command),
                 lambda event: isinstance(event, ToolBatchCompleted),
                 self._scope,
+                idle_timeout=self._phase_idle_timeout,
             ):
                 yield tool_event
                 if isinstance(tool_event, ToolBatchCompleted):
@@ -174,7 +175,6 @@ class AgentLoop:
                 self._scope.control,
                 self._scope,
             )
-            consume_estimated(prepared)
             model_done: ModelCompleted | None = None
             async for model_event in iterate_strict(
                 self._ports.model.stream(prepared),
@@ -203,6 +203,7 @@ class AgentLoop:
                     self._ports.tools.execute(command),
                     lambda event: isinstance(event, ToolBatchCompleted),
                     self._scope,
+                    idle_timeout=self._phase_idle_timeout,
                 ):
                     yield batch_event
                     if isinstance(batch_event, ToolBatchCompleted):
@@ -217,6 +218,7 @@ class AgentLoop:
                     self._ports.completion.complete(CompletionCommand(step=prepared, result=result)),
                     lambda event: isinstance(event, CompletionCompleted),
                     self._scope,
+                    idle_timeout=self._phase_idle_timeout,
                 ):
                     yield completion_event
                     if isinstance(completion_event, CompletionCompleted):

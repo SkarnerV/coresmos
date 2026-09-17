@@ -4,10 +4,12 @@ import asyncio
 
 from agent_runtime.contracts import (
     CompletedEntry,
+    ExecutionLimits,
     Message,
     ModelEntry,
     RecordTarget,
     Role,
+    RunCancelled,
     RunControl,
     RunFailed,
     RunRequest,
@@ -16,8 +18,9 @@ from agent_runtime.contracts import (
     StopReason,
     ToolCall,
 )
+from agent_runtime.pipelines.tools import DefaultToolPipeline
 from agent_runtime.recording import MemoryTranscript
-from agent_runtime.runner import assemble_default
+from agent_runtime.runner import PortOverrides, assemble_default
 from agent_runtime.testing import (
     ScriptedInvoker,
     ScriptedModel,
@@ -164,3 +167,50 @@ async def test_concurrent_runs_are_isolated() -> None:
     assert any(isinstance(event, RunSucceeded) for event in right)
     assert any(getattr(event, "kind", "") == "tool_result" for event in left)
     assert not any(getattr(event, "kind", "") == "tool_result" for event in right)
+
+
+async def test_run_deadline_cancels_a_blocking_tool() -> None:
+    runtime = assemble_default(
+        model=ScriptedModel(),
+        invoker=ScriptedInvoker({"echo": ScriptedToolBehavior(block=True, external_handle="job-9")}),
+        tools=(ECHO,),
+    )
+    from agent_runtime.contracts import ToolBatchEntry
+
+    events = await collect_run(
+        RunRequest(
+            run_id="deadline",
+            input_items=(Message(role=Role.USER, content="x"),),
+            record_target=RecordTarget("t"),
+            entry=ToolBatchEntry(calls=(ToolCall("c1", "echo", {"text": "x"}),)),
+            limits=ExecutionLimits(deadline_seconds=0.05),
+        ),
+        RunControl(),
+        runtime,
+    )
+    cancelled = next(event for event in events if isinstance(event, RunCancelled))
+    assert cancelled.reason is StopReason.DEADLINE
+    assert any(work.handle == "job-9" for work in cancelled.external_work)
+
+
+async def test_port_override_keeps_runner_lifecycle() -> None:
+    model = ScriptedModel([ScriptedTurn(text="never")])
+    invoker = ScriptedInvoker()
+    runtime = assemble_default(
+        model=model,
+        invoker=invoker,
+        tools=(ECHO,),
+        ports=PortOverrides(tools=lambda session: DefaultToolPipeline(invoker, session, session.capabilities.bindings)),
+    )
+    events = await collect_run(
+        RunRequest(
+            run_id="override",
+            input_items=(Message(role=Role.USER, content="hello"),),
+            record_target=RecordTarget("t"),
+            entry=ModelEntry(),
+        ),
+        RunControl(),
+        runtime,
+    )
+    assert any(isinstance(event, RunSucceeded) for event in events)
+    assert model.call_count == 1

@@ -1,9 +1,9 @@
 from agent_runtime.capabilities.providers import (
     BindingRegistry,
+    BindingSource,
     CapabilitySession,
     FixedCapabilityProvider,
     ResolverChain,
-    empty_snapshot,
 )
 from agent_runtime.capabilities.schema import (
     DEFAULT_DIALECT,
@@ -15,11 +15,11 @@ from agent_runtime.capabilities.schema import (
 __all__ = [
     "DEFAULT_DIALECT",
     "BindingRegistry",
+    "BindingSource",
     "CapabilitySession",
     "FixedCapabilityProvider",
     "ResolverChain",
     "assert_supported_schema",
     "check_tool_spec",
-    "empty_snapshot",
     "validate_tool_call",
 ]

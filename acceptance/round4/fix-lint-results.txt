@@ -1,0 +1,6 @@
+# ruff check
+[1;32mAll checks passed![0m
+# ruff format --check
+55 files already formatted
+# mypy
+Success: no issues found in 32 source files

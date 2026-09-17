@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
+from typing import Protocol, runtime_checkable
 
 from agent_runtime.capabilities.schema import check_tool_spec
 from agent_runtime.contracts import (
-    ActorIdentity,
     ApplicationSnapshot,
     BindingSetRef,
     CapabilityPolicyRef,
     CapabilitySnapshot,
     MatchKind,
-    RecordTarget,
     Resolution,
     RunRequest,
     ToolSpec,
@@ -46,6 +45,14 @@ class BindingRegistry:
 
     def names(self, ref: BindingSetRef) -> frozenset[str]:
         return frozenset(self._versions.get(ref.version, {}))
+
+
+@runtime_checkable
+class BindingSource(Protocol):
+    """A provider that owns the registry its snapshots' binding refs resolve against."""
+
+    @property
+    def bindings(self) -> BindingRegistry: ...
 
 
 class FixedCapabilityProvider:
@@ -85,8 +92,21 @@ class FixedCapabilityProvider:
 class ResolverChain:
     """Only NoMatch continues. Degraded, rejected, and config errors stop the chain."""
 
-    def __init__(self, providers: Sequence[CapabilityProvider]) -> None:
+    def __init__(self, providers: Sequence[CapabilityProvider], *, bindings: BindingRegistry | None = None) -> None:
         self._providers = tuple(providers)
+        if bindings is not None:
+            self._bindings = bindings
+        else:
+            found: BindingRegistry | None = None
+            for provider in self._providers:
+                if isinstance(provider, BindingSource):
+                    found = provider.bindings
+                    break
+            self._bindings = found if found is not None else BindingRegistry()
+
+    @property
+    def bindings(self) -> BindingRegistry:
+        return self._bindings
 
     async def resolve(self, request: RunRequest, application: ApplicationSnapshot) -> Resolution:
         last = Resolution(kind=MatchKind.NO_MATCH, reason="empty chain")
@@ -145,19 +165,3 @@ class CapabilitySession:
         for spec in extra:
             names[spec.name] = spec
         return self.publish(tuple(names.values()))
-
-
-def empty_snapshot() -> CapabilitySnapshot:
-    return CapabilitySnapshot(
-        version="cap-empty",
-        tools=(),
-        binding_ref=BindingSetRef("bind-empty"),
-    )
-
-
-def unused_identity() -> ActorIdentity:
-    return ActorIdentity("anonymous")
-
-
-def unused_target() -> RecordTarget:
-    return RecordTarget("default")

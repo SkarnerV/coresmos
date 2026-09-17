@@ -237,3 +237,39 @@ async def test_result_receipt_is_bound_to_stored_batch_identity() -> None:
             logical_op_id="other-results",
             previous_receipt=receipt,
         )
+
+
+async def test_unrecorded_tools_skip_transcript_writes() -> None:
+    transcript = MemoryTranscript(unrecorded_tools=("internal",))
+    target = RecordTarget("t1")
+    receipt = await transcript.record_tool_calls(
+        run_id="r",
+        step_no=1,
+        record_target=target,
+        calls=(ToolCall("c1", "internal", {}),),
+        assistant_text=None,
+        reasoning=None,
+        logical_op_id="calls",
+    )
+    assert receipt.recording_required is False
+    assert receipt.calls == ()
+    results = await transcript.record_tool_results(
+        run_id="r",
+        step_no=1,
+        record_target=target,
+        results=(ToolResult(call_id="c1", name="internal", output="ok"),),
+        logical_op_id="results",
+        previous_receipt=receipt,
+    )
+    assert results == ()
+    assert transcript.snapshot(target).messages == ()
+    with pytest.raises(RecordingError):
+        await transcript.record_tool_calls(
+            run_id="r",
+            step_no=2,
+            record_target=target,
+            calls=(ToolCall("c2", "echo", {"text": "x"}), ToolCall("c3", "internal", {})),
+            assistant_text=None,
+            reasoning=None,
+            logical_op_id="mixed",
+        )

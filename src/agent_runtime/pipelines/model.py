@@ -38,6 +38,8 @@ class DefaultModelPipeline:
         last_error: BaseException | None = None
         for attempt in range(1, attempts + 1):
             raise_if_stopped(self._session.control)
+            # A retry does not consume another model round, but it does spend tokens again.
+            self._session.execution_budget.reserve(step.estimated_tokens)
             completed = False
             emitted_output = False
             finish = timed(

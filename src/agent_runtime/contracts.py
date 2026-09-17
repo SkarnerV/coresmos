@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
@@ -33,10 +33,13 @@ class Role(Enum):
 
 
 class StopReason(Enum):
+    """Distinct stop sources. A consumer disconnect is never reported as a user stop."""
+
     USER_STOP = "user_stop"
     HOST_CANCEL = "host_cancel"
     CONSUMER_CLOSED = "consumer_closed"
     DEADLINE = "deadline"
+    IDLE_TIMEOUT = "idle_timeout"
 
 
 class ToolChoiceMode(Enum):
@@ -142,9 +145,12 @@ class ConsumedBudget:
 
 @dataclass(frozen=True)
 class ExecutionLimits:
+    """Per-run ceilings. `deadline_seconds` is wall clock from the moment the run starts."""
+
     max_model_rounds: int | None = 16
     max_steps: int | None = 32
     max_estimated_tokens: int | None = None
+    deadline_seconds: float | None = None
     recovery: RecoveryBudget = field(default_factory=RecoveryBudget)
 
 
@@ -197,6 +203,22 @@ class ToolResult:
     name: str
     output: str
     is_error: bool = False
+
+
+@dataclass(frozen=True)
+class ExternalWorkRef:
+    """External work an adapter started that the runtime cannot cancel by itself.
+
+    The adapter declares it while the call is in flight; the host tracks and reconciles it.
+    `cancellable=False` means a stop leaves the work running, so the runtime reports the ref
+    on the cancelled terminal event instead of pretending the side effect was undone.
+    """
+
+    call_id: str
+    tool_name: str
+    handle: str
+    cancellable: bool = False
+    detail: str | None = None
 
 
 @dataclass(frozen=True)
@@ -316,10 +338,27 @@ class CapabilitySnapshot:
 
 @dataclass(frozen=True)
 class PreparedContext:
+    """What the context module produced for this step: the model view, not the stored facts."""
+
     messages: tuple[Message, ...]
     contributions: tuple[ContextContribution, ...]
     estimated_tokens: int
     compressed: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "messages", tuple(self.messages))
+        object.__setattr__(self, "contributions", tuple(self.contributions))
+
+
+@dataclass(frozen=True)
+class SummaryProjection:
+    """A stored model view plus the key that produced it. Reuse requires an exact key match."""
+
+    key: str
+    messages: tuple[Message, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "messages", tuple(self.messages))
 
 
 @dataclass(frozen=True)
@@ -330,6 +369,7 @@ class PreparedStep:
     capabilities: CapabilitySnapshot
     context_version: ContextVersion
     estimated_tokens: int = 0
+    context: PreparedContext | None = None
 
 
 @dataclass(frozen=True)
@@ -473,6 +513,7 @@ class RunControl:
             StopReason.USER_STOP: asyncio.Event(),
             StopReason.HOST_CANCEL: asyncio.Event(),
             StopReason.CONSUMER_CLOSED: asyncio.Event(),
+            StopReason.IDLE_TIMEOUT: asyncio.Event(),
         }
         self._first: StopReason | None = None
         self._any = asyncio.Event()
@@ -491,6 +532,12 @@ class RunControl:
         if self._first is None:
             self._first = reason
             self._any.set()
+
+    def arm_deadline(self, *, seconds: float) -> float:
+        """Start the wall-clock deadline now. An already-armed deadline is never extended."""
+        if self._deadline is None:
+            self._deadline = time.monotonic() + seconds
+        return self._deadline
 
     @property
     def deadline_monotonic(self) -> float | None:
@@ -533,6 +580,31 @@ class RunControl:
             return StopReason.DEADLINE
         assert self._first is not None
         return self._first
+
+
+def _drop_external_work(work: ExternalWorkRef) -> None:
+    """Default sink for hosts that build a ToolInvocation without a tracking channel."""
+    del work
+
+
+def _drop_progress(payload: Mapping[str, JsonValue]) -> None:
+    del payload
+
+
+@dataclass(frozen=True)
+class ToolInvocation:
+    """One validated call plus the channels an adapter may use while the call runs.
+
+    `declare_external_work` and `report_progress` are synchronous and non-blocking: they hand
+    the item to the batch pipeline, which forwards it as an event. Calling them after the
+    invocation returns has no effect.
+    """
+
+    call: ToolCall
+    binding: BindingSetRef
+    control: RunControl
+    declare_external_work: Callable[[ExternalWorkRef], None] = _drop_external_work
+    report_progress: Callable[[Mapping[str, JsonValue]], None] = _drop_progress
 
 
 # --- events ---
@@ -579,6 +651,13 @@ class ToolProgressEvent:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "payload", freeze_mapping(self.payload))
+
+
+@dataclass(frozen=True)
+class ExternalWorkDeclared:
+    identity: StepIdentity
+    work: ExternalWorkRef
+    kind: Literal["external_work_declared"] = "external_work_declared"
 
 
 @dataclass(frozen=True)
@@ -636,9 +715,15 @@ class RunFailed:
 
 @dataclass(frozen=True)
 class RunCancelled:
+    """Cancelled terminal event. `external_work` lists refs the host still has to reconcile."""
+
     run_id: str
     reason: StopReason
+    external_work: tuple[ExternalWorkRef, ...] = ()
     kind: Literal["run_cancelled"] = "run_cancelled"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "external_work", tuple(self.external_work))
 
 
 @dataclass(frozen=True)
@@ -650,7 +735,7 @@ class RunWaiting:
 
 
 ModelStepEvent = TextDeltaEvent | ReasoningDeltaEvent | ModelCompleted
-ToolBatchEvent = ToolCallRecordedEvent | ToolProgressEvent | ToolResultEvent | ToolBatchCompleted
+ToolBatchEvent = ToolCallRecordedEvent | ToolProgressEvent | ExternalWorkDeclared | ToolResultEvent | ToolBatchCompleted
 CompletionEvent = CompletionCompleted
 RuntimeEvent = (
     RunStarted
@@ -660,6 +745,7 @@ RuntimeEvent = (
     | ModelCompleted
     | ToolCallRecordedEvent
     | ToolProgressEvent
+    | ExternalWorkDeclared
     | ToolResultEvent
     | ToolBatchCompleted
     | CompletionCompleted

@@ -1,0 +1,42 @@
+........................................................................ [ 76%]
+......................                                                   [100%]
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.13-final-0 _______________
+
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+src/agent_runtime/__init__.py                     3      0   100%
+src/agent_runtime/adapters/__init__.py            0      0   100%
+src/agent_runtime/adapters/openai.py            209     21    90%   49, 67, 91, 128, 141-143, 150-152, 159, 219, 239-240, 258, 269, 275, 291, 293, 309, 311, 313
+src/agent_runtime/application.py                 28     11    61%   25-27, 35-46
+src/agent_runtime/capabilities/__init__.py        3      0   100%
+src/agent_runtime/capabilities/providers.py      86      6    93%   99, 112, 130, 151, 159, 163
+src/agent_runtime/capabilities/schema.py         55      7    87%   29, 38, 49-50, 56-57, 74
+src/agent_runtime/context/__init__.py             4      0   100%
+src/agent_runtime/context/budget.py              64      6    91%   24, 26, 51, 54, 81, 99
+src/agent_runtime/context/compress.py            88      9    90%   22-25, 38, 45, 61, 64, 107
+src/agent_runtime/context/manager.py             82     10    88%   40, 46, 97, 120, 159-161, 165, 169, 173
+src/agent_runtime/contracts.py                  461     19    96%   127-128, 217, 314, 497, 509, 518, 523, 529-535, 581, 674, 678, 682
+src/agent_runtime/core.py                       134     17    87%   60, 75-77, 99, 107, 115, 148, 151, 154, 160, 180, 203, 217, 222-223, 230
+src/agent_runtime/exceptions.py                  19      0   100%
+src/agent_runtime/jsonutil.py                    24      2    92%   20, 35
+src/agent_runtime/lifecycle.py                  198     25    87%   43, 49, 57, 62-63, 146-149, 164-166, 193-197, 203, 241, 259-263, 269
+src/agent_runtime/observability.py              102     21    79%   57, 67-68, 101-116, 124, 128
+src/agent_runtime/pipelines/__init__.py           4      0   100%
+src/agent_runtime/pipelines/completion.py        33      5    85%   53-54, 58-59, 61
+src/agent_runtime/pipelines/model.py             93      7    92%   37, 91, 115-116, 127, 129, 135
+src/agent_runtime/pipelines/tools.py             83      9    89%   42, 48, 109-110, 136-137, 142-143, 154
+src/agent_runtime/policies.py                    20      7    65%   38, 43-45, 49-51
+src/agent_runtime/ports.py                       31      0   100%
+src/agent_runtime/recording.py                  227     20    91%   48, 59, 124, 130, 172, 240-250, 265, 318, 320, 339, 396-400, 417, 486, 527-528, 534
+src/agent_runtime/runner.py                     123      5    96%   103, 171, 238-239, 248
+src/agent_runtime/session.py                     34      2    94%   39, 43
+src/agent_runtime/testing/__init__.py             6      0   100%
+src/agent_runtime/testing/events.py              10      4    60%   10-11, 14, 17
+src/agent_runtime/testing/harness.py             64      4    94%   139, 144, 149, 156
+src/agent_runtime/testing/models.py              68     11    84%   54, 60-67, 87, 89
+src/agent_runtime/testing/scenarios.py           31      3    90%   68, 70, 72
+src/agent_runtime/testing/tools.py               47     10    79%   63-64, 66-73
+---------------------------------------------------------------------------
+TOTAL                                          2434    241    90%
+94 passed in 1.21s

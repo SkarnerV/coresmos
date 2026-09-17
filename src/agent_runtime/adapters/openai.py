@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from collections.abc import AsyncIterator, Awaitable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -27,6 +28,7 @@ from agent_runtime.lifecycle import CallbackStream, await_despite_cancellation
 from agent_runtime.ports import ManagedEventStream
 
 _STREAM_END = object()
+_MIN_CLOSE_SECONDS = 0.001
 
 
 @dataclass
@@ -130,6 +132,19 @@ async def _release(resource: object) -> None:
         await result
 
 
+async def _release_within(resource: object, budget_seconds: float) -> bool:
+    """Release a resource inside an explicit budget. False means the close did not finish in time."""
+    try:
+        async with asyncio.timeout(max(budget_seconds, _MIN_CLOSE_SECONDS)):
+            await _release(resource)
+    except TimeoutError:
+        return False
+    except Exception:
+        # A resource that reports its own close failure is still no longer owned here.
+        return True
+    return True
+
+
 async def _await_deadline[T](awaitable: Awaitable[T], deadline: float) -> T:
     remaining = deadline - asyncio.get_running_loop().time()
     if remaining <= 0:
@@ -147,7 +162,11 @@ def _json_object(value: Mapping[str, JsonValue] | Mapping[str, object]) -> dict[
 
 
 class OpenAIChatCompletionsModel:
-    """Reference LowLevelModel. Vendor SDK types stay inside this adapter."""
+    """Reference LowLevelModel. Vendor SDK types stay inside this adapter.
+
+    The timeout bounds each phase on its own: SDK create and chunk reads share one deadline,
+    and releasing the stream gets the same budget again so cleanup can never wait forever.
+    """
 
     def __init__(
         self,
@@ -167,41 +186,43 @@ class OpenAIChatCompletionsModel:
         del control
         return CallbackStream(self._stream(request))
 
+    def _attempt_timeout(self, request: ModelRequest) -> float:
+        """Bound the attempt by whichever comes first: the adapter timeout or the run deadline."""
+        if request.deadline_monotonic is None:
+            return self._timeout
+        remaining = request.deadline_monotonic - time.monotonic()
+        return max(_MIN_CLOSE_SECONDS, min(self._timeout, remaining))
+
     async def _stream(self, request: ModelRequest) -> AsyncIterator[ModelStepEvent]:
         create = self._client.chat.completions.create
         identity = StepIdentity(run_id="openai", step_no=0, model_round=0)
         kwargs = request_payload(request, default_model=self._default_model)
-        loop = asyncio.get_running_loop()
-        deadline = loop.time() + self._timeout
+        budget = self._attempt_timeout(request)
+        deadline = asyncio.get_running_loop().time() + budget
         queue: asyncio.Queue[object] = asyncio.Queue()
-        stream_holder: list[Any] = []
+        opened: list[Any] = []
 
         async def produce() -> None:
-            stream = None
+            # The producer owns reading; this generator owns the close, so the stream is
+            # never released twice and a cancelled producer cannot block on cleanup.
             try:
-                async with asyncio.timeout(self._timeout):
+                async with asyncio.timeout(budget):
                     stream = await create(**kwargs)
-                    stream_holder.append(stream)
+                    opened.append(stream)
                     self._active_streams.append(stream)
                     async for event in normalize_chat_completion_stream(stream, identity=identity):
                         await queue.put(event)
-                    await queue.put(_STREAM_END)
+                await queue.put(_STREAM_END)
             except Exception as exc:
                 await queue.put(exc)
-            finally:
-                if stream is not None:
-                    try:
-                        await _release(stream)
-                    except Exception:
-                        pass
-                    if stream in self._active_streams:
-                        self._active_streams.remove(stream)
 
         producer = asyncio.create_task(produce(), name="openai-stream-producer")
+        drained = False
         try:
             while True:
                 item = await _await_deadline(queue.get(), deadline)
                 if item is _STREAM_END:
+                    drained = True
                     return
                 if isinstance(item, AdapterError):
                     raise item
@@ -213,20 +234,40 @@ class OpenAIChatCompletionsModel:
         except Exception as exc:
             raise AdapterError(str(exc)) from exc
         finally:
-            if not producer.done():
-                producer.cancel()
-            await await_despite_cancellation(asyncio.gather(producer, return_exceptions=True))
-            for stream in list(stream_holder):
+            released = await await_despite_cancellation(self._release_producer(producer, opened))
+            if drained and not released:
+                raise AdapterError("stream close exceeded the adapter timeout")
+
+    async def _release_producer(self, producer: asyncio.Task[None], opened: list[Any]) -> bool:
+        """Cancel the read task and release its stream, each inside the close budget."""
+        released = True
+        if not producer.done():
+            producer.cancel()
+        try:
+            await asyncio.wait_for(asyncio.gather(producer, return_exceptions=True), timeout=self._close_timeout)
+        except TimeoutError:
+            released = False
+        for stream in list(opened):
+            try:
+                if not await _release_within(stream, self._close_timeout):
+                    released = False
+            finally:
+                # A stream that timed out is not reported as released, but this adapter stops
+                # owning it so later cleanup cannot inherit an unbounded wait.
                 if stream in self._active_streams:
-                    await _release(stream)
                     self._active_streams.remove(stream)
+        return released
+
+    @property
+    def _close_timeout(self) -> float:
+        return max(self._timeout, _MIN_CLOSE_SECONDS)
 
     async def aclose(self) -> None:
         for stream in list(self._active_streams):
-            await _release(stream)
+            await _release_within(stream, self._close_timeout)
         self._active_streams.clear()
         if self._owns_client:
-            await _release(self._client)
+            await _release_within(self._client, self._close_timeout)
 
 
 def create_openai_client(*, api_key: str, timeout: float = 60.0, **extra: Any) -> Any:

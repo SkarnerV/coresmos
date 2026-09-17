@@ -102,12 +102,16 @@ async def await_despite_cancellation[T](awaitable: Awaitable[T]) -> T:
                 task.cancel()
 
 
-async def _cancel_and_wait(*tasks: asyncio.Task[Any]) -> None:
+async def cancel_and_wait(*tasks: asyncio.Task[Any]) -> None:
+    """Cancel tasks and wait until they actually exit. Cleanup never relies on collection."""
     pending = [task for task in tasks if not task.done()]
     for task in pending:
         task.cancel()
     if pending:
         await await_despite_cancellation(asyncio.gather(*pending, return_exceptions=True))
+
+
+_cancel_and_wait = cancel_and_wait
 
 
 async def wait_next[T](
@@ -144,7 +148,8 @@ async def wait_next[T](
             return None
         return result  # type: ignore[return-value]
     if not done:
-        raise CancelledRunError(StopReason.DEADLINE.value)
+        # Inter-event silence is its own reason: the run may be far from its wall-clock deadline.
+        raise CancelledRunError(StopReason.IDLE_TIMEOUT.value)
     reason = stop_task.result() if stop_task in done else control.first_reason
     raise CancelledRunError((reason or StopReason.HOST_CANCEL).value)
 

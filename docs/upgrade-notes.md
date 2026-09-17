@@ -12,6 +12,14 @@ First public `agent-runtime` release.
 
 There is no previous public API. Subsequent 0.1.x releases will record breaking contract changes here.
 
+### Assembly and invoker contract (this revision)
+
+- `assemble_default` accepts `capability_provider`, `ports` (`PortOverrides`), and `summaries`. A `ResolverChain` can be passed as the capability provider; only `NoMatch` continues the chain.
+- `ToolInvoker.invoke` takes a single `ToolInvocation`. The previous `(call, binding, control)` signature is not called.
+- `StopReason.IDLE_TIMEOUT` is raised for inter-event silence. A wall-clock run deadline is `ExecutionLimits.deadline_seconds` / `RunControl.arm_deadline` and reports `StopReason.DEADLINE`.
+- `BatchReceipt.recording_required=False` means the recorder must not write a model-visible call/result pair. `MemoryTranscript(unrecorded_tools=...)` is the reference.
+- Context compression may drop oldest plain turns after whole tool-call groups. A `SummarizingCompressor` can be injected; its summarizer is a `Summarizer`, typically `ModelSummarizer`.
+
 ### Verified extras combinations
 
 | Install | Expected |

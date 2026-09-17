@@ -116,6 +116,37 @@ async def test_backoff_stop_cancels_sleep() -> None:
     assert stopped
 
 
+async def test_wall_clock_deadline_is_distinct_from_idle_timeout() -> None:
+    control = RunControl()
+    control.arm_deadline(seconds=0.02)
+    assert control.first_reason is None
+    await asyncio.sleep(0.05)
+    assert control.first_reason is StopReason.DEADLINE
+    assert not control.reason_set(StopReason.IDLE_TIMEOUT)
+
+
+async def test_idle_timeout_reason_is_not_deadline() -> None:
+    from agent_runtime.exceptions import CancelledRunError
+    from agent_runtime.lifecycle import iterate_cancellable
+
+    model = ScriptedModel([ScriptedTurn(delay=1.0, text="late")])
+    control = RunControl()
+    scope = RunScope(control)
+    stream = model.stream(request=_empty_request(), control=control)
+    try:
+        agen = iterate_cancellable(stream, control, scope, idle_timeout=0.02)
+        try:
+            await anext(agen)
+            raised = None
+        except CancelledRunError as exc:
+            raised = exc
+        assert raised is not None
+        assert raised.reason == StopReason.IDLE_TIMEOUT.value
+    finally:
+        await stream.aclose()
+        await scope.aclose()
+
+
 def _empty_request():  # noqa: ANN201
     from agent_runtime.contracts import ModelConfig, ModelRequest, RecoveryBudget, ToolChoice
 

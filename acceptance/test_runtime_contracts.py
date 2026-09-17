@@ -14,7 +14,6 @@ from agent_runtime.context import DefaultStepProvider, RunView, TokenBudgetPolic
 from agent_runtime.contracts import (
     ApplicationSnapshot,
     BatchReceipt,
-    BindingSetRef,
     CallRecord,
     ContextContribution,
     ExecutionEntry,
@@ -35,6 +34,7 @@ from agent_runtime.contracts import (
     TextDeltaEvent,
     ToolBatchEntry,
     ToolCall,
+    ToolInvocation,
     ToolResult,
 )
 from agent_runtime.exceptions import AdapterError, ContextBudgetError, ReceiptMismatchError
@@ -170,8 +170,8 @@ async def test_result_receipt_is_bound_to_its_run_step_and_target() -> None:
 
 
 class ContributingInvoker(ScriptedInvoker):
-    async def invoke(self, call: ToolCall, binding: BindingSetRef, control: RunControl) -> InvocationOutcome:
-        outcome = await super().invoke(call, binding, control)
+    async def invoke(self, invocation: ToolInvocation) -> InvocationOutcome:
+        outcome = await super().invoke(invocation)
         return replace(
             outcome,
             contributions=(ContextContribution("tool-context", "NEXT_ROUND_CONTEXT", "run", 10, "k"),),

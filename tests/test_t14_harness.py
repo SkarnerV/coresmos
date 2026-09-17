@@ -10,49 +10,45 @@ from agent_runtime.contracts import (
     RunFailed,
     RunRequest,
     RunSucceeded,
-    RunWaiting,
 )
 from agent_runtime.exceptions import ContextBudgetError
 from agent_runtime.runner import assemble_default
 from agent_runtime.testing.harness import (
-    assert_failed,
-    assert_success,
-    assert_waiting,
+    CONTRACT_SCENES,
     default_factory,
+    run_contract_suite,
     scene_plain_text,
-    scene_record_failure,
-    scene_tool_then_text,
-    scene_tool_updates_context,
-    scene_wait_and_stop,
 )
 from agent_runtime.testing.models import ScriptedModel, ScriptedTurn
 from agent_runtime.testing.scenarios import collect_run
 from agent_runtime.testing.tools import ScriptedInvoker
 
 
-async def test_four_synthetic_scenes_with_default_factory() -> None:
-    text = await scene_plain_text()
-    assert_success(text)
-    assert text.model.call_count == 1
-
-    loop = await scene_tool_then_text()
-    assert_success(loop)
-    assert loop.model.call_count == 2
-    assert loop.invoker.invoke_count == 1
-
-    updated = await scene_tool_updates_context()
-    assert_success(updated)
-    assert any(spec.name == "other" for spec in updated.model.requests[1].tools)
-
-    waiting = await scene_wait_and_stop()
-    assert_waiting(waiting)
-    assert waiting.model.call_count == 0
-    assert any(isinstance(event, RunWaiting) for event in waiting.events)
-
-    failed = await scene_record_failure()
-    assert_failed(failed)
-    assert failed.model.call_count == 0
-    assert failed.invoker.invoke_count == 0
+async def test_contract_suite_covers_the_design_rows() -> None:
+    names = {scene.name for scene in CONTRACT_SCENES}
+    required = {
+        "plain_text",
+        "tool_then_text",
+        "record_failure",
+        "wait_and_stop",
+        "capability_version_change",
+        "message_identity",
+        "empty_then_recovered",
+        "empty_response_exhausted",
+        "trailing_completion_event",
+        "duplicate_completion_event",
+        "user_stop_during_tool",
+        "consumer_close",
+        "initial_tools_keep_model_rounds",
+        "retry_keeps_model_rounds",
+        "budget_stops_before_the_model",
+        "runs_are_isolated",
+        "observer_failure",
+        "target_change_and_finish",
+    }
+    assert required <= names
+    passed = await run_contract_suite()
+    assert set(passed) == names
 
 
 async def test_factory_binding_can_inject_budget_without_changing_loop() -> None:

@@ -42,6 +42,30 @@ def _payload_key(value: object) -> object:
     return value
 
 
+def _receipt_identity(receipt: MessageReceipt | BatchReceipt | None) -> object:
+    """Stable identity of a receipt. Returned status such as `created` is excluded."""
+    if receipt is None:
+        return None
+    if isinstance(receipt, BatchReceipt):
+        return (
+            LogicalOpKind.TOOL_CALLS,
+            receipt.run_id,
+            receipt.step_no,
+            receipt.record_target,
+            receipt.logical_op_id,
+            receipt.calls,
+            receipt.assistant_message_id,
+            receipt.recording_required,
+        )
+    return (
+        receipt.message_id,
+        receipt.run_id,
+        receipt.step_no,
+        receipt.record_target,
+        receipt.logical_op_id,
+    )
+
+
 @dataclass
 class _CommittedOp:
     kind: LogicalOpKind
@@ -57,9 +81,16 @@ class _CommittedOp:
 
 
 class MemoryTranscript:
-    """In-memory TranscriptPort. Same behavioral contract as a database adapter."""
+    """In-memory TranscriptPort. Same behavioral contract as a database adapter.
 
-    def __init__(self) -> None:
+    `unrecorded_tools` models a host whose internal context actions are not part of the model
+    transcript: those batches come back with `recording_required=False` and write nothing. A
+    batch may not mix recorded and unrecorded tools, because that would leave the model with
+    an assistant message whose tool calls have no matching results.
+    """
+
+    def __init__(self, *, unrecorded_tools: Sequence[str] = ()) -> None:
+        self._unrecorded_tools = frozenset(unrecorded_tools)
         self._lock = asyncio.Lock()
         self._messages: dict[str, Message] = {}
         self._order: dict[str, list[str]] = {}
@@ -79,6 +110,14 @@ class MemoryTranscript:
     def _next_id(self, prefix: str, run_id: str) -> str:
         self._seq += 1
         return f"{prefix}:{run_id}:{self._seq}"
+
+    def _unrecorded(self, calls: Sequence[ToolCall]) -> bool:
+        if not self._unrecorded_tools:
+            return False
+        skipped = [call.name in self._unrecorded_tools for call in calls]
+        if any(skipped) and not all(skipped):
+            raise RecordingError("a batch cannot mix recorded and unrecorded tools")
+        return bool(skipped) and all(skipped)
 
     def _check_fail(self, logical_op_id: str) -> None:
         if logical_op_id in self._fail_ops:
@@ -101,7 +140,9 @@ class MemoryTranscript:
             raise IdempotencyError(f"logical op {logical_op_id} reused with a different payload")
         if existing.run_id != run_id or existing.step_no != step_no or existing.record_target != record_target:
             raise IdempotencyError(f"logical op {logical_op_id} reused with a different identity")
-        if previous_receipt is not None and existing.previous_receipt != previous_receipt:
+        if previous_receipt is not None and _receipt_identity(existing.previous_receipt) != _receipt_identity(
+            previous_receipt
+        ):
             raise ReceiptMismatchError("previous_receipt does not match the committed operation")
         return existing
 
@@ -369,8 +410,32 @@ class MemoryTranscript:
                 return replace(existing.batch_receipt, created=False)
             if previous_receipt is not None:
                 committed = self._ops.get(previous_receipt.logical_op_id)
-                if committed is None or committed.batch_receipt != previous_receipt:
+                if committed is None or _receipt_identity(committed.batch_receipt) != _receipt_identity(
+                    previous_receipt
+                ):
                     raise ReceiptMismatchError("previous_receipt does not match a committed batch")
+            if self._unrecorded(calls):
+                receipt = BatchReceipt(
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    logical_op_id=logical_op_id,
+                    calls=(),
+                    assistant_message_id=None,
+                    recording_required=False,
+                    created=True,
+                )
+                self._store_op(
+                    logical_op_id,
+                    kind=LogicalOpKind.TOOL_CALLS,
+                    payload=payload,
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    previous_receipt=previous_receipt,
+                    batch_receipt=receipt,
+                )
+                return receipt
             key = (run_id, step_no, record_target.value, attempt)
             message_id = self._text_ids.get(key)
             if message_id is None:
@@ -440,18 +505,14 @@ class MemoryTranscript:
                     previous_receipt=previous_receipt,
                 )
                 return tuple(replace(receipt, created=False) for receipt in existing.message_receipts)
+            if not previous_receipt.recording_required:
+                # The batch declared that it is outside the model transcript; nothing to pair.
+                return ()
             committed = self._ops.get(previous_receipt.logical_op_id)
             if committed is None or committed.batch_receipt is None:
                 raise ReceiptMismatchError("previous_receipt is not a committed tool-call batch")
             stored = committed.batch_receipt
-            if (
-                stored.logical_op_id != previous_receipt.logical_op_id
-                or stored.run_id != previous_receipt.run_id
-                or stored.step_no != previous_receipt.step_no
-                or stored.record_target != previous_receipt.record_target
-                or stored.calls != previous_receipt.calls
-                or stored.assistant_message_id != previous_receipt.assistant_message_id
-            ):
+            if _receipt_identity(stored) != _receipt_identity(previous_receipt):
                 raise ReceiptMismatchError("previous_receipt does not match committed batch identity")
             if stored.run_id != run_id or stored.step_no != step_no or stored.record_target != record_target:
                 raise ReceiptMismatchError("previous_receipt is bound to a different run, step, or target")

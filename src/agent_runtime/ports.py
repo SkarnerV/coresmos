@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, runtime_checkable
 
 from agent_runtime.contracts import (
     ApplicationSnapshot,
     BatchReceipt,
-    BindingSetRef,
     CompletionCommand,
     CompletionEvent,
     ContextContribution,
@@ -27,9 +26,11 @@ from agent_runtime.contracts import (
     RunStatus,
     RuntimeEvent,
     StepIdentity,
+    SummaryProjection,
     ToolBatchCommand,
     ToolBatchEvent,
     ToolCall,
+    ToolInvocation,
     ToolResult,
     TranscriptSnapshot,
 )
@@ -48,6 +49,13 @@ class ManagedEventStream(Protocol[T_co]):
 
 class StepProvider(Protocol):
     async def prepare(self, identity: StepIdentity) -> PreparedStep: ...
+
+
+@runtime_checkable
+class ProjectionInvalidation(Protocol):
+    """Optional on a StepProvider: drop caches derived from a commit that then failed."""
+
+    async def invalidate_summary(self, target: RecordTarget) -> None: ...
 
 
 class ModelStepPort(Protocol):
@@ -81,12 +89,9 @@ class LowLevelModel(Protocol):
 
 
 class ToolInvoker(Protocol):
-    async def invoke(
-        self,
-        call: ToolCall,
-        binding: BindingSetRef,
-        control: RunControl,
-    ) -> InvocationOutcome: ...
+    """Executes one validated call. Argument authorization belongs here, not in the snapshot."""
+
+    async def invoke(self, invocation: ToolInvocation) -> InvocationOutcome: ...
 
 
 class TranscriptPort(Protocol):
@@ -185,9 +190,11 @@ class CompletionPolicy(Protocol):
 
 
 class SummaryProjectionPort(Protocol):
-    async def get(self, record_target: RecordTarget) -> tuple[Message, ...]: ...
+    """Store for compressed model views. Projections only; original facts stay in the transcript."""
 
-    async def put(self, record_target: RecordTarget, messages: tuple[Message, ...]) -> None: ...
+    async def get(self, record_target: RecordTarget) -> SummaryProjection | None: ...
+
+    async def put(self, record_target: RecordTarget, projection: SummaryProjection) -> None: ...
 
     async def invalidate(self, record_target: RecordTarget) -> None: ...
 
@@ -210,12 +217,35 @@ class ContextContributor(Protocol):
     ) -> tuple[ContextContribution, ...]: ...
 
 
+@runtime_checkable
+class CacheableContributor(Protocol):
+    """Opt-in scope caching. Only the contributor knows what invalidates its own content.
+
+    Returning a stable key lets the step provider reuse the last contributions instead of
+    hitting an external source every model round. Returning None disables caching.
+    """
+
+    def cache_key(
+        self,
+        *,
+        request: RunRequest,
+        target: RecordTarget,
+        application: ApplicationSnapshot,
+    ) -> str | None: ...
+
+
 class TokenEstimator(Protocol):
     def estimate_text(self, text: str) -> int: ...
 
     def estimate_schema(self, schema: Mapping[str, JsonValue]) -> int: ...
 
     def can_estimate(self, text: str) -> bool: ...
+
+
+class Summarizer(Protocol):
+    """Turns dropped history into one short text. Model-backed implementations inject a model."""
+
+    async def summarize(self, messages: Sequence[Message], *, budget_tokens: int) -> str: ...
 
 
 class Compressor(Protocol):
