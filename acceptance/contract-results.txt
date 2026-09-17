@@ -1,0 +1,87 @@
+FFFFFFFFFFF                                                              [100%]
+================================== FAILURES ===================================
+______________ test_text_delta_is_visible_before_model_finishes _______________
+acceptance\test_runtime_contracts.py:114: in test_text_delta_is_visible_before_model_finishes
+    assert streamed_before_completion, "Runtime withheld the delta until the entire model stream ended"
+E   AssertionError: Runtime withheld the delta until the entire model stream ended
+E   assert False
+__________ test_tool_entry_continue_after_false_does_not_call_model ___________
+acceptance\test_runtime_contracts.py:124: in test_tool_entry_continue_after_false_does_not_call_model
+    assert model.call_count == 0, "continue_after=False still entered the model loop"
+E   AssertionError: continue_after=False still entered the model loop
+E   assert 1 == 0
+E    +  where 1 = <agent_runtime.testing.models.ScriptedModel object at 0x0000020F404EB920>.call_count
+__________ test_failed_result_batch_does_not_publish_partial_history __________
+acceptance\test_runtime_contracts.py:140: in test_failed_result_batch_does_not_publish_partial_history
+    assert transcript.snapshot(TARGET) == before, "A rejected batch committed its first result"
+E   AssertionError: A rejected batch committed its first result
+E   assert TranscriptSna...ceptance:2'))) == TranscriptSna...eptance:1'),))
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing attributes:
+E     ['version', 'messages']
+E     
+E     Drill down into differing attribute version:
+E       version: 'v2:acceptance-target' != 'v1:acceptance-target'...
+E     
+E     ...Full output truncated (9 lines hidden), use '-vv' to show
+______________ test_result_receipt_cannot_add_an_unrecorded_call ______________
+acceptance\test_runtime_contracts.py:147: in test_result_receipt_cannot_add_an_unrecorded_call
+    with pytest.raises(ReceiptMismatchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ReceiptMismatchError
+___________ test_result_receipt_is_bound_to_its_run_step_and_target ___________
+acceptance\test_runtime_contracts.py:161: in test_result_receipt_is_bound_to_its_run_step_and_target
+    with pytest.raises(ReceiptMismatchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ReceiptMismatchError
+_____________ test_tool_context_contribution_reaches_next_request _____________
+acceptance\test_runtime_contracts.py:188: in test_tool_context_contribution_reaches_next_request
+    assert any(message.content == "NEXT_ROUND_CONTEXT" for message in model.requests[1].messages), (
+E   AssertionError: InvocationOutcome.contributions was discarded by the default pipeline
+E   assert False
+E    +  where False = any(<generator object test_tool_context_contribution_reaches_next_request.<locals>.<genexpr> at 0x0000020F3FB5D630>)
+__________ test_prepared_request_budget_includes_tool_call_arguments __________
+acceptance\test_runtime_contracts.py:224: in test_prepared_request_budget_includes_tool_call_arguments
+    assert estimated <= available, f"Prepared request uses {estimated} tokens; available budget is {available}"
+E   AssertionError: Prepared request uses 1505 tokens; available budget is 455
+E   assert 1505 <= 455
+______ test_history_projection_does_not_leave_unmatched_assistant_calls _______
+acceptance\test_runtime_contracts.py:242: in test_history_projection_does_not_leave_unmatched_assistant_calls
+    assert sorted(results) == sorted(call.call_id for call in message.tool_calls), (
+E   AssertionError: Projection forwarded an incomplete tool-call/result group
+E   assert ['c1'] == ['c1', 'c2']
+E     
+E     Right contains one more item: 'c2'
+E     Use -v to get more diff
+___________ test_host_task_cancellation_propagates_and_closes_model ___________
+acceptance\test_runtime_contracts.py:258: in test_host_task_cancellation_propagates_and_closes_model
+    assert isinstance(result, asyncio.CancelledError), f"Host task cancellation was converted to {result!r}"
+E   AssertionError: Host task cancellation was converted to [RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStarted(identity=StepIdentity(run_id='acceptance', step_no=1, model_round=1), phase='model', kind='step_started'), RunFailed(run_id='acceptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')]
+E   assert False
+E    +  where False = isinstance([RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStart...eptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')], <class 'asyncio.exceptions.CancelledError'>)
+E    +    where <class 'asyncio.exceptions.CancelledError'> = asyncio.CancelledError
+_________________ test_user_stop_interrupts_step_preparation __________________
+acceptance\test_runtime_contracts.py:297: in test_user_stop_interrupts_step_preparation
+    assert stopped_before_release, "User stop waited for the blocked application/provider call to return"
+E   AssertionError: User stop waited for the blocked application/provider call to return
+E   assert False
+__________ test_partial_output_failure_does_not_retry_without_opt_in __________
+acceptance\test_runtime_contracts.py:319: in test_partial_output_failure_does_not_retry_without_opt_in
+    assert model.calls == 1, "Default partial-output policy silently issued another model request"
+E   AssertionError: Default partial-output policy silently issued another model request
+E   assert 2 == 1
+E    +  where 2 = <test_runtime_contracts.PartialFailureModel object at 0x0000020F406449E0>.calls
+=========================== short test summary info ===========================
+FAILED acceptance/test_runtime_contracts.py::test_text_delta_is_visible_before_model_finishes
+FAILED acceptance/test_runtime_contracts.py::test_tool_entry_continue_after_false_does_not_call_model
+FAILED acceptance/test_runtime_contracts.py::test_failed_result_batch_does_not_publish_partial_history
+FAILED acceptance/test_runtime_contracts.py::test_result_receipt_cannot_add_an_unrecorded_call
+FAILED acceptance/test_runtime_contracts.py::test_result_receipt_is_bound_to_its_run_step_and_target
+FAILED acceptance/test_runtime_contracts.py::test_tool_context_contribution_reaches_next_request
+FAILED acceptance/test_runtime_contracts.py::test_prepared_request_budget_includes_tool_call_arguments
+FAILED acceptance/test_runtime_contracts.py::test_history_projection_does_not_leave_unmatched_assistant_calls
+FAILED acceptance/test_runtime_contracts.py::test_host_task_cancellation_propagates_and_closes_model
+FAILED acceptance/test_runtime_contracts.py::test_user_stop_interrupts_step_preparation
+FAILED acceptance/test_runtime_contracts.py::test_partial_output_failure_does_not_retry_without_opt_in
+11 failed in 1.34s

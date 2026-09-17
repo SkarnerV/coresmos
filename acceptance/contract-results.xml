@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="11" skipped="0" tests="11" time="1.287" timestamp="2026-09-17T20:33:58.768954+08:00" hostname="DESKTOP-2DUPP2M"><testcase classname="acceptance.test_runtime_contracts" name="test_text_delta_is_visible_before_model_finishes" time="0.506"><failure message="AssertionError: Runtime withheld the delta until the entire model stream ended&#10;assert False">acceptance\test_runtime_contracts.py:114: in test_text_delta_is_visible_before_model_finishes
+    assert streamed_before_completion, "Runtime withheld the delta until the entire model stream ended"
+E   AssertionError: Runtime withheld the delta until the entire model stream ended
+E   assert False</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_tool_entry_continue_after_false_does_not_call_model" time="0.004"><failure message="AssertionError: continue_after=False still entered the model loop&#10;assert 1 == 0&#10; +  where 1 = &lt;agent_runtime.testing.models.ScriptedModel object at 0x0000020F404EB920&gt;.call_count">acceptance\test_runtime_contracts.py:124: in test_tool_entry_continue_after_false_does_not_call_model
+    assert model.call_count == 0, "continue_after=False still entered the model loop"
+E   AssertionError: continue_after=False still entered the model loop
+E   assert 1 == 0
+E    +  where 1 = &lt;agent_runtime.testing.models.ScriptedModel object at 0x0000020F404EB920&gt;.call_count</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_failed_result_batch_does_not_publish_partial_history" time="0.002"><failure message="AssertionError: A rejected batch committed its first result&#10;assert TranscriptSna...ceptance:2'))) == TranscriptSna...eptance:1'),))&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing attributes:&#10;  ['version', 'messages']&#10;  &#10;  Drill down into differing attribute version:&#10;    version: 'v2:acceptance-target' != 'v1:acceptance-target'...&#10;  &#10;  ...Full output truncated (9 lines hidden), use '-vv' to show">acceptance\test_runtime_contracts.py:140: in test_failed_result_batch_does_not_publish_partial_history
+    assert transcript.snapshot(TARGET) == before, "A rejected batch committed its first result"
+E   AssertionError: A rejected batch committed its first result
+E   assert TranscriptSna...ceptance:2'))) == TranscriptSna...eptance:1'),))
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing attributes:
+E     ['version', 'messages']
+E     
+E     Drill down into differing attribute version:
+E       version: 'v2:acceptance-target' != 'v1:acceptance-target'...
+E     
+E     ...Full output truncated (9 lines hidden), use '-vv' to show</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_result_receipt_cannot_add_an_unrecorded_call" time="0.001"><failure message="Failed: DID NOT RAISE ReceiptMismatchError">acceptance\test_runtime_contracts.py:147: in test_result_receipt_cannot_add_an_unrecorded_call
+    with pytest.raises(ReceiptMismatchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ReceiptMismatchError</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_result_receipt_is_bound_to_its_run_step_and_target" time="0.002"><failure message="Failed: DID NOT RAISE ReceiptMismatchError">acceptance\test_runtime_contracts.py:161: in test_result_receipt_is_bound_to_its_run_step_and_target
+    with pytest.raises(ReceiptMismatchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ReceiptMismatchError</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_tool_context_contribution_reaches_next_request" time="0.004"><failure message="AssertionError: InvocationOutcome.contributions was discarded by the default pipeline&#10;assert False&#10; +  where False = any(&lt;generator object test_tool_context_contribution_reaches_next_request.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000020F3FB5D630&gt;)">acceptance\test_runtime_contracts.py:188: in test_tool_context_contribution_reaches_next_request
+    assert any(message.content == "NEXT_ROUND_CONTEXT" for message in model.requests[1].messages), (
+E   AssertionError: InvocationOutcome.contributions was discarded by the default pipeline
+E   assert False
+E    +  where False = any(&lt;generator object test_tool_context_contribution_reaches_next_request.&lt;locals&gt;.&lt;genexpr&gt; at 0x0000020F3FB5D630&gt;)</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_prepared_request_budget_includes_tool_call_arguments" time="0.002"><failure message="AssertionError: Prepared request uses 1505 tokens; available budget is 455&#10;assert 1505 &lt;= 455">acceptance\test_runtime_contracts.py:224: in test_prepared_request_budget_includes_tool_call_arguments
+    assert estimated &lt;= available, f"Prepared request uses {estimated} tokens; available budget is {available}"
+E   AssertionError: Prepared request uses 1505 tokens; available budget is 455
+E   assert 1505 &lt;= 455</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_history_projection_does_not_leave_unmatched_assistant_calls" time="0.000"><failure message="AssertionError: Projection forwarded an incomplete tool-call/result group&#10;assert ['c1'] == ['c1', 'c2']&#10;  &#10;  Right contains one more item: 'c2'&#10;  Use -v to get more diff">acceptance\test_runtime_contracts.py:242: in test_history_projection_does_not_leave_unmatched_assistant_calls
+    assert sorted(results) == sorted(call.call_id for call in message.tool_calls), (
+E   AssertionError: Projection forwarded an incomplete tool-call/result group
+E   assert ['c1'] == ['c1', 'c2']
+E     
+E     Right contains one more item: 'c2'
+E     Use -v to get more diff</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_host_task_cancellation_propagates_and_closes_model" time="0.002"><failure message="AssertionError: Host task cancellation was converted to [RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStarted(identity=StepIdentity(run_id='acceptance', step_no=1, model_round=1), phase='model', kind='step_started'), RunFailed(run_id='acceptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')]&#10;assert False&#10; +  where False = isinstance([RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStart...eptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')], &lt;class 'asyncio.exceptions.CancelledError'&gt;)&#10; +    where &lt;class 'asyncio.exceptions.CancelledError'&gt; = asyncio.CancelledError">acceptance\test_runtime_contracts.py:258: in test_host_task_cancellation_propagates_and_closes_model
+    assert isinstance(result, asyncio.CancelledError), f"Host task cancellation was converted to {result!r}"
+E   AssertionError: Host task cancellation was converted to [RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStarted(identity=StepIdentity(run_id='acceptance', step_no=1, model_round=1), phase='model', kind='step_started'), RunFailed(run_id='acceptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')]
+E   assert False
+E    +  where False = isinstance([RunStarted(run_id='acceptance', record_target=RecordTarget(value='acceptance-target'), kind='run_started'), StepStart...eptance', error_type='RuntimeError', message='aclose(): asynchronous generator is already running', kind='run_failed')], &lt;class 'asyncio.exceptions.CancelledError'&gt;)
+E    +    where &lt;class 'asyncio.exceptions.CancelledError'&gt; = asyncio.CancelledError</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_user_stop_interrupts_step_preparation" time="0.517"><failure message="AssertionError: User stop waited for the blocked application/provider call to return&#10;assert False">acceptance\test_runtime_contracts.py:297: in test_user_stop_interrupts_step_preparation
+    assert stopped_before_release, "User stop waited for the blocked application/provider call to return"
+E   AssertionError: User stop waited for the blocked application/provider call to return
+E   assert False</failure></testcase><testcase classname="acceptance.test_runtime_contracts" name="test_partial_output_failure_does_not_retry_without_opt_in" time="0.002"><failure message="AssertionError: Default partial-output policy silently issued another model request&#10;assert 2 == 1&#10; +  where 2 = &lt;test_runtime_contracts.PartialFailureModel object at 0x0000020F406449E0&gt;.calls">acceptance\test_runtime_contracts.py:319: in test_partial_output_failure_does_not_retry_without_opt_in
+    assert model.calls == 1, "Default partial-output policy silently issued another model request"
+E   AssertionError: Default partial-output policy silently issued another model request
+E   assert 2 == 1
+E    +  where 2 = &lt;test_runtime_contracts.PartialFailureModel object at 0x0000020F406449E0&gt;.calls</failure></testcase></testsuite></testsuites>

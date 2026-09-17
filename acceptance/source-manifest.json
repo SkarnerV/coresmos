@@ -1,0 +1,262 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "sha256": "20F4CB470CBEFA2FAC3354300110857D40555FB6A95B287BA500FDCC42BF07F5"
+  },
+  {
+    "path": "agent-runtime-development-tasks.md",
+    "sha256": "C9ECF3BDA12753AF64B2F1FEA21BAE08C50B6729203B68D9C8BF5DFB56F7137F"
+  },
+  {
+    "path": "agent-runtime-integration-design.md",
+    "sha256": "F6CCFD3AA758B620E5D6526BD66ABC49131BB6A97A2FBA3755786C3A6CDDC30E"
+  },
+  {
+    "path": "agent-runtime-technology-selection.md",
+    "sha256": "DD08F955160C2DA1C79432F246EC9009F765A9638CA205E197B4E9E1F5DEC10C"
+  },
+  {
+    "path": "pyproject.toml",
+    "sha256": "DE7BAC9BA462527ECF642213788B83B8012A2DD129DE1C8FAAC4B421C933F846"
+  },
+  {
+    "path": "src\\agent_runtime\\__init__.py",
+    "sha256": "92EC104AFA7E73D266255457A578D8E80EA746F5C4491A1CC94F2351B9B3EE1A"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\__init__.cpython-312.pyc",
+    "sha256": "57E2F7868638864384AF7313D94E3428C2A100A67676E2C281E0F8D999D6EAAC"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\application.cpython-312.pyc",
+    "sha256": "6D6E97B222FF1DA2FABE4D615DD45B62B4BD852A83B208AC1CD7297218E10E26"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\contracts.cpython-312.pyc",
+    "sha256": "EF38372C5232D2C9F5CDEA8EA73E67A15CC76B6AD5CDAAC6AAC97D44E8D017FD"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\core.cpython-312.pyc",
+    "sha256": "A7F38F3ADFCAAE60325CD9B24481C7F652FD8A0BEAECDE5FA122BFADC21B63D3"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\exceptions.cpython-312.pyc",
+    "sha256": "46BFD06B6AC6A70F5B430B7C99AD9071471B100C0D3A7BF197DE8358B612E675"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\jsonutil.cpython-312.pyc",
+    "sha256": "569FF00AA5FF21EB628212B24166D9156D69E4F47204535AAC85AFCCA9087BFB"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\lifecycle.cpython-312.pyc",
+    "sha256": "C5B00FDA2FEB7FF1821B8F31EDB2F3044FAE5C766D26FCEACE635AF60363F487"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\policies.cpython-312.pyc",
+    "sha256": "F20CD01FB0537EA9CBCB0ACAFA69F7B41DE90EBFFFF8917F2F033EBA8E524FDE"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\ports.cpython-312.pyc",
+    "sha256": "3215E5525ABBF4645B6A205B0B759347DC810613090011209454EF678113B87F"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\recording.cpython-312.pyc",
+    "sha256": "B3064C3CB22DD2DAED7637FCA9EC456D2CBA4051F349AA3F5CB6D2CB42DE400B"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\runner.cpython-312.pyc",
+    "sha256": "0C30635C11C0D3C52D771FACE2324E5C430AE543DE3A8D2D7B8CB998C829B683"
+  },
+  {
+    "path": "src\\agent_runtime\\__pycache__\\session.cpython-312.pyc",
+    "sha256": "A4AD9567AA5B15725EE81EE09F758A29637D801CFA5735E6148FA0DE76B999F4"
+  },
+  {
+    "path": "src\\agent_runtime\\adapters\\__init__.py",
+    "sha256": "98CD15258C59E70D6DFBD38DBAF293CB3416BC3ACB8F4DE28620AB2CA62128FE"
+  },
+  {
+    "path": "src\\agent_runtime\\application.py",
+    "sha256": "9BB5828C941CBB245358D53B4A3D634AF808342352994A89E5287C089B0596CC"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\__init__.py",
+    "sha256": "5C2B9038E628063409F771BA3C5254B862ACAEA486F4CD8DFEC0B6947DFF3929"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\__pycache__\\__init__.cpython-312.pyc",
+    "sha256": "7B622B9630A5A373CD7EBA0CA85F6CE46DE473CAC975C76B374D003C0636B268"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\__pycache__\\providers.cpython-312.pyc",
+    "sha256": "ADE7E71EC90D831D8167018A662487992549535AB9DA9369CB2EA8BDDAA81817"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\__pycache__\\schema.cpython-312.pyc",
+    "sha256": "7AD4A7A842AB591971CEBECEC3A92D526E21F09105932B58BD3A2630B9CAC26E"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\providers.py",
+    "sha256": "223EC54390E84AD4FC7C9F4A77D65CF38FBF861D1C1219FF00BFC332E526CADC"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\schema.py",
+    "sha256": "1E07C998C841FED47EEE9D22F579B200849BD9511B2DA3067C990D3F3A06C202"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__init__.py",
+    "sha256": "80DD2C5C2EFC5C7D8B1704EE84E1727E812ECDBABE72859C79C976234A022A8F"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__pycache__\\__init__.cpython-312.pyc",
+    "sha256": "0E831AA0C0CC04A70129B7401D716A1F9C5BFC1FA0F57BFB8A1B3A38D73D263F"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__pycache__\\budget.cpython-312.pyc",
+    "sha256": "BCF72911F147D06D4EA177D0C926024DCCADA34C5D836465F4CC27CE2293172A"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__pycache__\\compress.cpython-312.pyc",
+    "sha256": "5B6107085DBCB980D46CE0A5FDDB68113463793ACEA0B89F384A0642B0E2FAEE"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__pycache__\\manager.cpython-312.pyc",
+    "sha256": "9C52CE71908BBA362A98905F8254F535FF43B0F1EE16D016D04300CFFB019C4D"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\budget.py",
+    "sha256": "6FED5179498262A2563AF784AB467FD82FE3C057B0904BB681AFF7154DDAAF2A"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\compress.py",
+    "sha256": "B58E2EE6DC03C9453B0F4B40181E1FA9491C699049898ADC804CE5890D715C5D"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\manager.py",
+    "sha256": "286621F6A0FC8370105A2DEF900AA70BF728A0DE17904AC19C8D76B16689BFED"
+  },
+  {
+    "path": "src\\agent_runtime\\contracts.py",
+    "sha256": "4138BD3E1C109316EB25C0F5CA1DA2BE6CC7C82C734677452845BA5CC677F72C"
+  },
+  {
+    "path": "src\\agent_runtime\\core.py",
+    "sha256": "FD6AB5CCC26407973EE509A77C22D5BCB276ED7E95B6EE208676047F5133A56B"
+  },
+  {
+    "path": "src\\agent_runtime\\exceptions.py",
+    "sha256": "2E7041831E3E6FBA82C2CE723AF0F2F3A7571081E65F104006B98D2706EAF567"
+  },
+  {
+    "path": "src\\agent_runtime\\jsonutil.py",
+    "sha256": "E626C110452D13287F47C252C0BE303A01827F4E4AAE1BCABEE0DC2AAF773E53"
+  },
+  {
+    "path": "src\\agent_runtime\\lifecycle.py",
+    "sha256": "D221452E8F55E12BAAD5C796F58EA46FAF05CAF497547F16AD8242BCE3184A89"
+  },
+  {
+    "path": "src\\agent_runtime\\observability.py",
+    "sha256": "E8953E15043EF33F09079FE5FDB2B90204295CD39EB06D74074A2E7D9F31E3B1"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__init__.py",
+    "sha256": "BB9475624B4E7E4D0AD7BFA2DB880A677112F41F15A27C61C16AAC3B375CE8D8"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__pycache__\\__init__.cpython-312.pyc",
+    "sha256": "34D330105678767AEE1E51ADE1E1E6970174E623B2A9E47E7EAE05F995092AC8"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__pycache__\\completion.cpython-312.pyc",
+    "sha256": "B3766DF565378435CDC6A4A2E79E8FED0B6749885DA98DE07CE6D17C6892A6F4"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__pycache__\\model.cpython-312.pyc",
+    "sha256": "17DC30625515C359D7789406F6CA9A71C742D1995802AD0BF1893FEE6F7BE54D"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__pycache__\\tools.cpython-312.pyc",
+    "sha256": "638743F9D413FE019AD855E1F20C5F17AC1CD0D2868BFB7A87FF7E2FE9498B33"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\completion.py",
+    "sha256": "9A6EE3EE37F0B46B3F4A150ED3459AB3ED0DB21CEF448C5C9C28AF71A4C91729"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\model.py",
+    "sha256": "705D8656A0BADF98397BB8E4BD023121E1EB4A523B11671EBFD3FBFDC818CD79"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\tools.py",
+    "sha256": "17B19427F3CD06FC54AA3349419A16DA45CEA1EDD8C58B52BB9ABD827D6042AE"
+  },
+  {
+    "path": "src\\agent_runtime\\policies.py",
+    "sha256": "202118FD11924753A85FC7EF9830080C445EEB63B94F6AEC0713E0BA36601CCC"
+  },
+  {
+    "path": "src\\agent_runtime\\ports.py",
+    "sha256": "05171F750BCDBAA8D0255A4434BE30B71CA8488DB1D8E8734061FF63F878A6FB"
+  },
+  {
+    "path": "src\\agent_runtime\\py.typed",
+    "sha256": "27C09A818F17B9C02642507155B674BFCAE5090EBEBC41F1B3DB5A09EFA8251E"
+  },
+  {
+    "path": "src\\agent_runtime\\recording.py",
+    "sha256": "07EEF73CE2DECE9416154B298457AB948C2636125BFA362AE6D9C40A11368A34"
+  },
+  {
+    "path": "src\\agent_runtime\\runner.py",
+    "sha256": "69C151647A8796D0B060DA94E0EB70BF1A9BC99CDC066D29E5D008D1AC3619A9"
+  },
+  {
+    "path": "src\\agent_runtime\\session.py",
+    "sha256": "4CFCF7284AB46F030424C043125C8E219C5D9CFB857C8AE00A56F57BC953B691"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__init__.py",
+    "sha256": "A904A3FD4E04A7C552C00D50429F86DD91B9DA580C0A07DC41CE2AAE117FDA58"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__pycache__\\__init__.cpython-312.pyc",
+    "sha256": "C9BB7C3CA26D9E21F71538ECB8EB0FA5ADE4D1178DBDE32665E0D9671FC75675"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__pycache__\\events.cpython-312.pyc",
+    "sha256": "7185492E2D86220CE1A822D35B7B4E7FD27183CC25BB3A01590D261A2C11C770"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__pycache__\\models.cpython-312.pyc",
+    "sha256": "F55D8B067A67963263B56C1B24F1D1C7150D06C4AB59E6DA3B187E3F3BB1856F"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__pycache__\\scenarios.cpython-312.pyc",
+    "sha256": "DEDF9994CA20516E1F79712A2CADB10100F93644BC15FECFC430C2E65A38C01F"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__pycache__\\tools.cpython-312.pyc",
+    "sha256": "7D6049FC9B3101AB442CEC1C9C67459CB07877AD7E762DE5A6435AB57AF7954E"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\events.py",
+    "sha256": "10B003F1DEDF4AEEECBE3FE401AF5CA21BF7F443D05404323B1BE3399BC8C745"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\models.py",
+    "sha256": "F2740431B450F5234A56FE5D9DD02110F4A3409A7174DFEA62E506EB1470D6F2"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\scenarios.py",
+    "sha256": "49DD5B4D2037F3AD7B6E39D2F869DF5A91F0A99010353C2BC4072214DB0B0133"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\tools.py",
+    "sha256": "35A83DAF03BF9164571AD3B4D1BE9D17D8F570CBC3B2011EC124ADD398701193"
+  },
+  {
+    "path": "uv.lock",
+    "sha256": "3C09F9157C51852772C4945EE120AB7191A18EA05AD0C6364DA0420D525C6BD9"
+  }
+]

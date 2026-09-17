@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+import pytest
+
+from agent_runtime.application import MemoryApplicationState
+from agent_runtime.capabilities import (
+    CapabilitySession,
+    FixedCapabilityProvider,
+    ResolverChain,
+    validate_tool_call,
+)
+from agent_runtime.contracts import (
+    ApplicationSnapshot,
+    MatchKind,
+    Message,
+    ModelConfig,
+    ModelEntry,
+    RecordTarget,
+    Role,
+    RunRequest,
+    ToolCall,
+    ToolSpec,
+)
+from agent_runtime.exceptions import CapabilityError, SchemaValidationError
+
+
+def _request() -> RunRequest:
+    return RunRequest(
+        run_id="r",
+        input_items=(Message(role=Role.USER, content="hi"),),
+        record_target=RecordTarget("t"),
+        entry=ModelEntry(),
+        model=ModelConfig(),
+    )
+
+
+ECHO = ToolSpec(
+    name="echo",
+    description="echo",
+    parameters={"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]},
+)
+
+
+class _NoMatch:
+    async def resolve(self, request: RunRequest, application: ApplicationSnapshot):  # noqa: ANN201
+        del request, application
+        from agent_runtime.contracts import Resolution
+
+        return Resolution(kind=MatchKind.NO_MATCH, reason="skip")
+
+
+class _Degraded:
+    async def resolve(self, request: RunRequest, application: ApplicationSnapshot):  # noqa: ANN201
+        del request, application
+        from agent_runtime.contracts import Resolution
+
+        return Resolution(kind=MatchKind.DEGRADED, reason="partial")
+
+
+class _Matched:
+    def __init__(self, provider: FixedCapabilityProvider) -> None:
+        self.provider = provider
+
+    async def resolve(self, request: RunRequest, application: ApplicationSnapshot):  # noqa: ANN201
+        return await self.provider.resolve(request, application)
+
+
+async def test_matched_stops_chain_and_degraded_is_not_nomatch() -> None:
+    app = await MemoryApplicationState(RecordTarget("t")).current(RecordTarget("t"))
+    request = _request()
+    matched = FixedCapabilityProvider((ECHO,))
+    chain = ResolverChain((_NoMatch(), _Matched(matched), _NoMatch()))
+    result = await chain.resolve(request, app)
+    assert result.kind is MatchKind.MATCHED
+    assert result.snapshot is not None
+    degraded_chain = ResolverChain((_Degraded(), _Matched(matched)))
+    degraded = await degraded_chain.resolve(request, app)
+    assert degraded.kind is MatchKind.DEGRADED
+
+
+async def test_empty_fixed_stays_empty() -> None:
+    provider = FixedCapabilityProvider(())
+    result = await provider.resolve(
+        _request(), await MemoryApplicationState(RecordTarget("t")).current(RecordTarget("t"))
+    )
+    assert result.kind is MatchKind.MATCHED
+    assert result.snapshot is not None
+    assert result.snapshot.tools == ()
+
+
+async def test_publish_does_not_mutate_old_snapshot() -> None:
+    provider = FixedCapabilityProvider((ECHO,))
+    snapshot = (
+        await provider.resolve(_request(), await MemoryApplicationState(RecordTarget("t")).current(RecordTarget("t")))
+    ).snapshot
+    assert snapshot is not None
+    session = CapabilitySession(snapshot, provider.bindings)
+    extra = ToolSpec(
+        name="other",
+        description="other",
+        parameters={"type": "object", "properties": {}},
+    )
+    updated = session.activate((extra,))
+    assert snapshot.version != updated.version
+    assert snapshot.tools == (ECHO,)
+    assert {spec.name for spec in updated.tools} == {"echo", "other"}
+    assert "secret" not in snapshot.binding_ref.version
+
+
+async def test_schema_and_params_fail_clearly() -> None:
+    bad = ToolSpec(name="bad", description="bad", parameters={"$schema": "https://json-schema.org/draft-04/schema"})
+    with pytest.raises(SchemaValidationError):
+        FixedCapabilityProvider((bad,))
+    with pytest.raises(SchemaValidationError):
+        validate_tool_call(ECHO, ToolCall(call_id="c", name="echo", arguments={"text": 1}))
+    with pytest.raises(CapabilityError):
+        provider = FixedCapabilityProvider((ECHO,))
+        result = await provider.resolve(
+            _request(), await MemoryApplicationState(RecordTarget("t")).current(RecordTarget("t"))
+        )
+        assert result.snapshot is not None
+        provider.bindings.resolve(result.snapshot.binding_ref, "missing")

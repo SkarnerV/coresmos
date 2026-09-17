@@ -1,0 +1,71 @@
+[project]
+name = "agent-runtime"
+version = "0.1.0"
+description = "In-process single-agent runtime with a four-port loop, default pipelines, and synthetic defaults."
+readme = "agent-runtime-integration-design.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema>=4.26,<5",
+    "referencing>=0.37,<0.38",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=2.45,<3"]
+otel = ["opentelemetry-api>=1.43,<2"]
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/examples",
+    "/docs",
+    "/pyproject.toml",
+    "/uv.lock",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3,<10",
+    "pytest-asyncio>=1.4,<2",
+    "pytest-cov>=7.1,<8",
+    "ruff>=0.15.16,<0.16",
+    "mypy>=2.1,<3",
+]
+
+[tool.uv]
+required-version = ">=0.8.22"
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests", "examples", "acceptance"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agent_runtime"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["agent_runtime"]
+
+[[tool.mypy.overrides]]
+module = ["jsonschema", "jsonschema.*", "openai", "openai.*", "opentelemetry", "opentelemetry.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests", "acceptance"]
+addopts = "-q"

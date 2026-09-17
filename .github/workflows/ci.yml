@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12", "3.13", "3.14"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Sync locked environment
+        run: uv sync --locked --group dev
+      - name: Lint
+        run: uv run ruff check src tests examples acceptance
+      - name: Format
+        run: uv run ruff format --check src tests examples acceptance
+      - name: Types
+        run: uv run mypy src/agent_runtime
+      - name: Tests
+        run: uv run pytest
+      - name: Build artifacts
+        run: uv build
+
+  extras:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Sync with extras
+        run: uv sync --locked --group dev --extra openai --extra otel
+      - name: Import extras together
+        run: |
+          uv run python -c "from agent_runtime.adapters.openai import OpenAIChatCompletionsModel; from agent_runtime.observability import OpenTelemetryObserver; print(OpenAIChatCompletionsModel, OpenTelemetryObserver)"
+      - name: Adapter and observer tests
+        run: uv run pytest tests/test_t13_openai.py tests/test_t12_observability.py tests/test_t15_extras.py
