@@ -1,0 +1,1 @@
+{"package": "C:\\codebase\\coresmos\\acceptance\\round2\\otel-env\\Lib\\site-packages\\agent_runtime\\__init__.py", "cwd": "C:\\Users\\h00931709-Blue\\AppData\\Local\\Temp", "scenes_passed": 5, "extras": {"opentelemetry-api": "1.43.0"}}

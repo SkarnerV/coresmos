@@ -1,0 +1,98 @@
+FFFFFFFFFF                                                               [100%]
+================================== FAILURES ===================================
+________________ test_openai_tool_schema_is_json_serializable _________________
+acceptance\round2\test_reacceptance_contracts.py:60: in test_openai_tool_schema_is_json_serializable
+    encoded = json.dumps(payload)
+              ^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:180: in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+E   TypeError: Object of type mappingproxy is not JSON serializable
+_____________ test_openai_history_supports_nested_tool_arguments ______________
+acceptance\round2\test_reacceptance_contracts.py:71: in test_openai_history_supports_nested_tool_arguments
+    payload = request_payload(request)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+src\agent_runtime\adapters\openai.py:203: in request_payload
+    "function": {"name": call.name, "arguments": json.dumps(dict(call.arguments))},
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+C:\Users\h00931709-Blue\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py:180: in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+E   TypeError: Object of type mappingproxy is not JSON serializable
+________ test_openai_timeout_covers_wait_after_first_delta_in_runtime _________
+acceptance\round2\test_reacceptance_contracts.py:113: in test_openai_timeout_covers_wait_after_first_delta_in_runtime
+    assert timed_out_without_release, "Adapter timeout expired, but Runtime still waited for the next chunk"
+E   AssertionError: Adapter timeout expired, but Runtime still waited for the next chunk
+E   assert False
+___________ test_initialization_failure_does_not_leak_observer_task ___________
+acceptance\round2\test_reacceptance_contracts.py:138: in test_initialization_failure_does_not_leak_observer_task
+    assert not leaked, f"Initialization left live tasks: {[task.get_name() for task in leaked]}"
+E   AssertionError: Initialization left live tasks: ['observer-pump']
+E   assert not [<Task pending name='observer-pump' coro=<IsolatedObserver._pump() running at C:\codebase\coresmos\src\agent_runtime\observability.py:79> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[set.discard()]>]
+_____________ test_result_replay_revalidates_run_step_and_target ______________
+acceptance\round2\test_reacceptance_contracts.py:169: in test_result_replay_revalidates_run_step_and_target
+    with pytest.raises((ReceiptMismatchError, IdempotencyError)):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE any of (ReceiptMismatchError, IdempotencyError)
+_____ test_result_replay_returns_original_message_of_same_step_and_target _____
+acceptance\round2\test_reacceptance_contracts.py:194: in test_result_replay_returns_original_message_of_same_step_and_target
+    assert replayed[0].message_id == second[0].message_id, "Replay returned another step/target's result message"
+E   AssertionError: Replay returned another step/target's result message
+E   assert 'msg:round2:2' == 'msg:round2:4'
+E     
+E     - msg:round2:4
+E     ?            ^
+E     + msg:round2:2
+E     ?            ^
+_________ test_wait_status_commits_before_waiting_event_is_published __________
+acceptance\round2\test_reacceptance_contracts.py:220: in test_wait_status_commits_before_waiting_event_is_published
+    assert status_at_wait is RunStatus.WAITING, f"WAIT was published before finalization: {status_at_wait!r}"
+E   AssertionError: WAIT was published before finalization: None
+E   assert None is <RunStatus.WAITING: 'waiting'>
+E    +  where <RunStatus.WAITING: 'waiting'> = RunStatus.WAITING
+__________________ test_observer_receives_run_terminal_event __________________
+acceptance\round2\test_reacceptance_contracts.py:241: in test_observer_receives_run_terminal_event
+    assert any(isinstance(event, RunSucceeded) for event in observer.events), "Observer never received run_succeeded"
+E   AssertionError: Observer never received run_succeeded
+E   assert False
+E    +  where False = any(<generator object test_observer_receives_run_terminal_event.<locals>.<genexpr> at 0x0000020B5074AEA0>)
+_ test_exhausted_budget_does_not_start_another_model_request[no-model-attempts-remaining] _
+acceptance\round2\test_reacceptance_contracts.py:258: in test_exhausted_budget_does_not_start_another_model_request
+    assert model.call_count == 0, "Runtime made a model request with an exhausted execution budget"
+E   AssertionError: Runtime made a model request with an exhausted execution budget
+E   assert 1 == 0
+E    +  where 1 = <agent_runtime.testing.models.ScriptedModel object at 0x0000020B50826540>.call_count
+_ test_exhausted_budget_does_not_start_another_model_request[restored-token-budget-already-exceeded] _
+acceptance\round2\test_reacceptance_contracts.py:258: in test_exhausted_budget_does_not_start_another_model_request
+    assert model.call_count == 0, "Runtime made a model request with an exhausted execution budget"
+E   AssertionError: Runtime made a model request with an exhausted execution budget
+E   assert 1 == 0
+E    +  where 1 = <agent_runtime.testing.models.ScriptedModel object at 0x0000020B50824EF0>.call_count
+=========================== short test summary info ===========================
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_openai_tool_schema_is_json_serializable
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_openai_history_supports_nested_tool_arguments
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_openai_timeout_covers_wait_after_first_delta_in_runtime
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_initialization_failure_does_not_leak_observer_task
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_result_replay_revalidates_run_step_and_target
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_result_replay_returns_original_message_of_same_step_and_target
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_wait_status_commits_before_waiting_event_is_published
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_observer_receives_run_terminal_event
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_exhausted_budget_does_not_start_another_model_request[no-model-attempts-remaining]
+FAILED acceptance/round2/test_reacceptance_contracts.py::test_exhausted_budget_does_not_start_another_model_request[restored-token-budget-already-exceeded]
+10 failed in 0.61s

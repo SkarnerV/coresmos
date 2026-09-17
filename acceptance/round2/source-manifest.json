@@ -1,0 +1,226 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "sha256": "941C86EDED27A1AF04F67F5D5CB49DC508DAB4906BD01429772C3D1483F7DC3B"
+  },
+  {
+    "path": "agent-runtime-development-tasks.md",
+    "sha256": "C9ECF3BDA12753AF64B2F1FEA21BAE08C50B6729203B68D9C8BF5DFB56F7137F"
+  },
+  {
+    "path": "agent-runtime-integration-design.md",
+    "sha256": "F6CCFD3AA758B620E5D6526BD66ABC49131BB6A97A2FBA3755786C3A6CDDC30E"
+  },
+  {
+    "path": "agent-runtime-technology-selection.md",
+    "sha256": "DD08F955160C2DA1C79432F246EC9009F765A9638CA205E197B4E9E1F5DEC10C"
+  },
+  {
+    "path": "docs/adapter-guide.md",
+    "sha256": "C25EDD62CCBE5CB9A585C6BCDFAEEB32DF1F62AEA8D9EF21992CE04C74ABB1F0"
+  },
+  {
+    "path": "docs/upgrade-notes.md",
+    "sha256": "D630888BCE2B1AA53EB54A56566007E626124DACCA25799CB875688A1730CC69"
+  },
+  {
+    "path": "pyproject.toml",
+    "sha256": "605255117CDD3DFDEC676C6251B9FE145C5421CB3564D0A9A07E248273AA309C"
+  },
+  {
+    "path": "src\\agent_runtime\\__init__.py",
+    "sha256": "92EC104AFA7E73D266255457A578D8E80EA746F5C4491A1CC94F2351B9B3EE1A"
+  },
+  {
+    "path": "src\\agent_runtime\\adapters\\__init__.py",
+    "sha256": "98CD15258C59E70D6DFBD38DBAF293CB3416BC3ACB8F4DE28620AB2CA62128FE"
+  },
+  {
+    "path": "src\\agent_runtime\\adapters\\openai.py",
+    "sha256": "0F59A0B1191D26B28670B7A1939D5A746DEB86BD1AA36E2475AF5A08C489737C"
+  },
+  {
+    "path": "src\\agent_runtime\\application.py",
+    "sha256": "9BB5828C941CBB245358D53B4A3D634AF808342352994A89E5287C089B0596CC"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\__init__.py",
+    "sha256": "5C2B9038E628063409F771BA3C5254B862ACAEA486F4CD8DFEC0B6947DFF3929"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\providers.py",
+    "sha256": "223EC54390E84AD4FC7C9F4A77D65CF38FBF861D1C1219FF00BFC332E526CADC"
+  },
+  {
+    "path": "src\\agent_runtime\\capabilities\\schema.py",
+    "sha256": "1E07C998C841FED47EEE9D22F579B200849BD9511B2DA3067C990D3F3A06C202"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\__init__.py",
+    "sha256": "80DD2C5C2EFC5C7D8B1704EE84E1727E812ECDBABE72859C79C976234A022A8F"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\budget.py",
+    "sha256": "D8EC67F4029C0DC2C8E30090211FE39FE45A72C2BBF7054FDAF04FB7BF722909"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\compress.py",
+    "sha256": "7409BA9BED8CE601261ABE048798F31D2616C10C11BB2E2B60E55D5B59DBCFC5"
+  },
+  {
+    "path": "src\\agent_runtime\\context\\manager.py",
+    "sha256": "6C92E670CDC5C4F714D8FF931F48754C41BF9CAEFA9AF0C6C0659F7274E63931"
+  },
+  {
+    "path": "src\\agent_runtime\\contracts.py",
+    "sha256": "34E68CE2371D64CAB327B09317F2F30FA9DFFE845728066795EBF95C61B0B8A6"
+  },
+  {
+    "path": "src\\agent_runtime\\core.py",
+    "sha256": "A10262588605275C68488364EF182918DBFB4827F30931F07E30BE7DA40850AF"
+  },
+  {
+    "path": "src\\agent_runtime\\exceptions.py",
+    "sha256": "2E7041831E3E6FBA82C2CE723AF0F2F3A7571081E65F104006B98D2706EAF567"
+  },
+  {
+    "path": "src\\agent_runtime\\jsonutil.py",
+    "sha256": "E626C110452D13287F47C252C0BE303A01827F4E4AAE1BCABEE0DC2AAF773E53"
+  },
+  {
+    "path": "src\\agent_runtime\\lifecycle.py",
+    "sha256": "E0DE8432D314D99117BC932B61413D496CD0DFCF453E3B63A13C9BA010F3DEB6"
+  },
+  {
+    "path": "src\\agent_runtime\\observability.py",
+    "sha256": "2F1A2237A7E03FE5CAC97CE33CED656359BA55FACF72D7FF834867928753D84C"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\__init__.py",
+    "sha256": "BB9475624B4E7E4D0AD7BFA2DB880A677112F41F15A27C61C16AAC3B375CE8D8"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\completion.py",
+    "sha256": "9A6EE3EE37F0B46B3F4A150ED3459AB3ED0DB21CEF448C5C9C28AF71A4C91729"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\model.py",
+    "sha256": "35B141992C0D0644B633FC0F8E2D4A75DD8CE3D57B1D4D6EA2A3D68E3150C1A7"
+  },
+  {
+    "path": "src\\agent_runtime\\pipelines\\tools.py",
+    "sha256": "6C60E12CCB7675D01A9EE178AD43D6AE04CED9064461925D743911627A1B6E6C"
+  },
+  {
+    "path": "src\\agent_runtime\\policies.py",
+    "sha256": "202118FD11924753A85FC7EF9830080C445EEB63B94F6AEC0713E0BA36601CCC"
+  },
+  {
+    "path": "src\\agent_runtime\\ports.py",
+    "sha256": "05171F750BCDBAA8D0255A4434BE30B71CA8488DB1D8E8734061FF63F878A6FB"
+  },
+  {
+    "path": "src\\agent_runtime\\py.typed",
+    "sha256": "27C09A818F17B9C02642507155B674BFCAE5090EBEBC41F1B3DB5A09EFA8251E"
+  },
+  {
+    "path": "src\\agent_runtime\\recording.py",
+    "sha256": "8ED8894CD3F08CFD33D95F70BE2B7098CEFB27E78998D72F46CA2C7A00DF3875"
+  },
+  {
+    "path": "src\\agent_runtime\\runner.py",
+    "sha256": "A4B51090F713D73F0E3D269C6D324B219EA6A9C87384268113D995C1B07F66F5"
+  },
+  {
+    "path": "src\\agent_runtime\\session.py",
+    "sha256": "BAD1118BB3831D765E275A6BA09A7A29B6531019F7DB838A23FAE0A0F16ED166"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\__init__.py",
+    "sha256": "B0078DBFC3018EEDEDE49FAAA9476F5AD0C286F380B42A82ECFCF8AF9DE421EE"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\events.py",
+    "sha256": "10B003F1DEDF4AEEECBE3FE401AF5CA21BF7F443D05404323B1BE3399BC8C745"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\harness.py",
+    "sha256": "3564E79A1AFD268000C07689D05364B5F26BD96EEB4BE395B5EAFEDE8BBDBDAB"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\models.py",
+    "sha256": "F2740431B450F5234A56FE5D9DD02110F4A3409A7174DFEA62E506EB1470D6F2"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\scenarios.py",
+    "sha256": "779F67EC27DCA65D91E974E247587B55A3E0767CBDA9800BF7D0EAB2BF9ED057"
+  },
+  {
+    "path": "src\\agent_runtime\\testing\\tools.py",
+    "sha256": "35A83DAF03BF9164571AD3B4D1BE9D17D8F570CBC3B2011EC124ADD398701193"
+  },
+  {
+    "path": "tests\\conftest.py",
+    "sha256": "7B17FA0FDD899BC3086579676F4FE6833FD57F4579A4D172FCCDFF6A87AEDDF3"
+  },
+  {
+    "path": "tests\\test_t01_packaging.py",
+    "sha256": "C2D7E49CDA93E9F37C4CE2FD04A5D6DCA0EC8B414EA42709771B588B4B73CA8F"
+  },
+  {
+    "path": "tests\\test_t02_contracts.py",
+    "sha256": "5FF4B194C4CEAB65035DEBC03CE644D24F1706A4838ED441BA5522FA57DA5B44"
+  },
+  {
+    "path": "tests\\test_t03_lifecycle.py",
+    "sha256": "CDD171AAB1CC55127A9F535BD7F947AFBA6F07A9CB8A70E25F15116347A8786D"
+  },
+  {
+    "path": "tests\\test_t04_recording.py",
+    "sha256": "4E2B819EFA025E60197FA2729F24B0E11B158051620AA2E5D5E75ED6C9BE5506"
+  },
+  {
+    "path": "tests\\test_t05_core.py",
+    "sha256": "4590EA0658F2DD04D96730F78BEEC5CAB578C3C41A259FC714F202E44188F5C5"
+  },
+  {
+    "path": "tests\\test_t06_capabilities.py",
+    "sha256": "B48118C00A126EADE566AB60004C72DE74F079D05FE8209BA70F6E6EA3CFCD24"
+  },
+  {
+    "path": "tests\\test_t07_context.py",
+    "sha256": "C57F75601B27D111017185414F73B58542F159F6938A8341D5681AAEDF8BBF30"
+  },
+  {
+    "path": "tests\\test_t08_partial_output.py",
+    "sha256": "5A1F56A9B0B35516E4691B4DBD4061A4B24D0CE6469F5612698075AC63D9E5CC"
+  },
+  {
+    "path": "tests\\test_t08_t10_pipelines.py",
+    "sha256": "2186BBE27E1867D3D52786662C40DECBA2E56BA7407B8B12672798827ED70EF3"
+  },
+  {
+    "path": "tests\\test_t11_runner.py",
+    "sha256": "B0D9F5416AAC994BB9E2143EF0D611E7A181C582B7157A7343C56CCD2A2E0F3A"
+  },
+  {
+    "path": "tests\\test_t12_observability.py",
+    "sha256": "5A816ECA49B6B5560FA739B0F4D1E1357A774B4C8C6AB55AF40CD38ED02DD28C"
+  },
+  {
+    "path": "tests\\test_t13_openai.py",
+    "sha256": "BCB3B2A417FD7A6A51882C9BFD65D1CF882FF074EA5C52F77155EA34A964F062"
+  },
+  {
+    "path": "tests\\test_t14_harness.py",
+    "sha256": "7AEBB1F8305392A2930E68917F8502D80BDEDF488C3CDAF518FA48FE5403E612"
+  },
+  {
+    "path": "tests\\test_t15_extras.py",
+    "sha256": "3E037808C16AB10EBA7BADE6CFEF1DEB20AAB856E42399A5278AC4C54EA6285E"
+  },
+  {
+    "path": "uv.lock",
+    "sha256": "3C09F9157C51852772C4945EE120AB7191A18EA05AD0C6364DA0420D525C6BD9"
+  }
+]

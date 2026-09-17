@@ -1,0 +1,24 @@
+{
+  "openai": "2.45.0",
+  "results": [
+    {
+      "case": "text_control",
+      "passed": true,
+      "http_calls": 1
+    },
+    {
+      "case": "tool_schema",
+      "passed": false,
+      "error_type": "AdapterError",
+      "message": "Object of type mappingproxy is not JSON serializable",
+      "http_calls": 0
+    },
+    {
+      "case": "nested_history",
+      "passed": false,
+      "error_type": "TypeError",
+      "message": "Object of type mappingproxy is not JSON serializable",
+      "http_calls": 0
+    }
+  ]
+}
