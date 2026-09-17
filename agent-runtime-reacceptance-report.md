@@ -1,3 +1,85 @@
+# Agent Runtime 第三轮验收报告（B01–B07 修复后）
+
+验收日期：2026-09-17。环境：macOS 15.6 arm64、Python 3.12.13。修复前代码基线：`648a5b7dfa49c594f4b615c2ff3d23bcc793ed6a`。依据：[修复计划](agent-runtime-fix-plan.md)。
+
+**结论：B01–B07 已修复并通过本机公共门槛检查；完整公共 v0.1 仍不标记通过。** 本机 84 项 pytest、Ruff、format、mypy、四种安装组合、两个 OpenAI 版本的 MockTransport 场景全部通过。GitHub CI 矩阵（Linux 3.12/3.13/3.14 与 Windows 3.12）未在本环境实际执行。
+
+本报告接续下方第二轮记录和[第一轮验收报告](agent-runtime-acceptance-report.md)。I01–I07 公司内部接入仍不在本次公共库范围内。
+
+**1. 修复对应关系**
+
+| 编号 | 修复 |
+| --- | --- |
+| B04 回执重放 | `_CommittedOp` 保存完整结果回执和 run/step/target/logical-op 身份。首次提交与重放共用身份、payload；提供 `previous_receipt` 时一并核验。重放返回已保存回执，不再按 `call_id` 全局搜索。 |
+| B05 WAIT 终态 | 向外发布 `RunWaiting` 前完成 `WAITING` 最终化。成功、失败、取消、WAIT、CompletedEntry 统一为最终化 → 观测 → 对外事件。最终化失败不发布成功或等待终态。 |
+| B07 执行预算 | `remaining_attempts == 0` 时禁止模型请求。分配阶段检查恢复入口累计 token；每次模型尝试计入 prompt、工具 schema、调用参数和预留输出。Provider `TokenUsage` 单独记录。 |
+| B03 初始化清理 | observer、scope、应用快照和能力解析放入统一 `try/finally`。初始化异常后取消并等待已创建任务，不遗留 observer-pump。 |
+| B06 终态观测 | `RunSucceeded`、`RunFailed`、`RunCancelled`、`RunWaiting` 经统一发布函数进入 observer 队列。观察者异常、阻塞和队列满不改变运行控制结果。 |
+| B01 JSON 转换 | 适配器边界对工具 schema 和嵌套参数调用 `thaw_json()`。 |
+| B02 流超时 | 固定生产任务持有 SDK 流和 `asyncio.timeout`；每次读取使用剩余 deadline。取消时等待底层流退出。共享 client 不会被误关闭。 |
+
+**2. 本机验证结果**
+
+| 检查 | 结果 |
+| --- | --- |
+| B01–B07 回归 | 10 passed（含预算参数化的两项） |
+| 完整 pytest | **84 passed** |
+| Ruff check / format | 通过；54 个 Python 文件格式通过 |
+| mypy | 通过；32 个源文件 |
+| 基础包独立安装 | 通过；源码目录外 `-I` 运行 5 个公开 Harness 场景；无 pytest、无 extra |
+| openai extra（锁文件 2.54.0） | 通过；5 个场景 |
+| openai==2.45.0 下界 | 通过；5 个场景 |
+| otel extra（锁文件 1.44.0） | 通过；5 个场景 |
+| openai+otel 组合 | 通过；OpenAI 2.54.0、OTel API 1.44.0 |
+| SDK MockTransport 2.54.0 | 纯文本、工具 schema、嵌套历史均通过，各 1 次 HTTP 调用 |
+| SDK MockTransport 2.45.0 | 同上，全部通过 |
+| CI 平台矩阵 | **未执行**（Linux 3.12/3.13/3.14、Windows 3.12） |
+
+**3. 命令**
+
+```bash
+uv run pytest -p no:cacheprovider --tb=short
+uv run pytest -p no:cacheprovider acceptance/round2/test_reacceptance_contracts.py --tb=short
+uv run ruff check src tests examples acceptance
+uv run ruff format --check src tests examples acceptance
+uv run mypy src/agent_runtime
+uv build --out-dir acceptance/round2/dist
+```
+
+从源码目录外验证已安装制品（示例）：
+
+```bash
+python -I acceptance/round2/installed_scenes.py
+python -I acceptance/round2/sdk_transport_probe.py
+```
+
+**4. 制品哈希（SHA-256）**
+
+| 制品 | SHA-256 |
+| --- | --- |
+| `acceptance/round2/dist/agent_runtime-0.1.0-py3-none-any.whl` | `FF65AA2648251098299B5807D91C8D9255582EDBBF3B783766141719B2E19707` |
+| `acceptance/round2/dist/agent_runtime-0.1.0.tar.gz` | `19A5479A859BBCE1D651CF86034A638C3991DD4AA509C417B1AD9278BDAECAA4` |
+
+wheel 由本次重建的 sdist 构建。
+
+**5. 复验材料**
+
+- [B01–B07 契约用例](acceptance/round2/test_reacceptance_contracts.py)
+- [全套结果：84 passed](acceptance/round2/full-results.txt) / [JUnit](acceptance/round2/full-results.xml)
+- [契约 10 passed](acceptance/round2/contract-results.txt)
+- [SDK 2.54.0](acceptance/round2/sdk-locked-results.txt)、[SDK 2.45.0](acceptance/round2/sdk-floor-results.txt)
+- [基础包场景](acceptance/round2/installed-base-env.txt)、[openai](acceptance/round2/installed-openai-env.txt)、[openai 2.45.0](acceptance/round2/installed-openai-floor-env.txt)、[otel](acceptance/round2/installed-otel-env.txt)、[组合 extra](acceptance/round2/installed-combined-env.txt)
+
+**6. 未完成项**
+
+- 未取得 Linux Python 3.12/3.13/3.14 与 Windows Python 3.12 的 CI 实际结果。
+- Hatchling 隔离构建依赖仍是版本范围，未见精确锁定。
+- 内部接入 I01–I07 继续单独验收。
+
+因此：**不在本轮标记完整公共 v0.1 通过。** 取得 CI 矩阵实际结果后才能关闭该项。
+
+---
+
 # Agent Runtime 第二轮验收报告
 
 验收日期：2026-09-17。环境：Windows、Python 3.12.13。代码基线：`62ffa5ddabd43ff8f272c18c76bd020a574343b1`。

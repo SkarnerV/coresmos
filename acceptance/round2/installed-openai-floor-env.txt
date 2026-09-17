@@ -1,0 +1,1 @@
+{"package": "/private/tmp/agent-runtime-fix-AY9rDL/openai-floor-env/lib/python3.12/site-packages/agent_runtime/__init__.py", "cwd": "/private/tmp", "scenes_passed": 5, "extras": {"openai": "2.45.0"}}

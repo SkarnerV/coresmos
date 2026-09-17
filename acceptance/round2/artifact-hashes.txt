@@ -1,0 +1,2 @@
+ff65aa2648251098299b5807d91c8d9255582edbbf3b783766141719b2e19707  /Users/skarner/codebase/coresmos/acceptance/round2/dist/agent_runtime-0.1.0-py3-none-any.whl
+19a5479a859bbce1d651cf86034a638c3991dd4aa509c417b1ad9278bdaecaa4  /Users/skarner/codebase/coresmos/acceptance/round2/dist/agent_runtime-0.1.0.tar.gz

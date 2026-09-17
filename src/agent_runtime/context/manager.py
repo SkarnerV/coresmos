@@ -136,6 +136,7 @@ class DefaultStepProvider:
                 application_version=application.version,
                 target=self._view.record_target,
             ),
+            estimated_tokens=self._budget.estimate_model_attempt(compressed_messages, capabilities.tools),
         )
 
     async def _read_consistent(self) -> tuple[TranscriptSnapshot, CapabilitySnapshot, ApplicationSnapshot]:

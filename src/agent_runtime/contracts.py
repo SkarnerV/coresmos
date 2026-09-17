@@ -329,6 +329,7 @@ class PreparedStep:
     request: ModelRequest
     capabilities: CapabilitySnapshot
     context_version: ContextVersion
+    estimated_tokens: int = 0
 
 
 @dataclass(frozen=True)

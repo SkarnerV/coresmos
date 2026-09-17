@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -22,9 +22,11 @@ from agent_runtime.contracts import (
     UsageSource,
 )
 from agent_runtime.exceptions import AdapterError
-from agent_runtime.jsonutil import freeze_mapping
-from agent_runtime.lifecycle import CallbackStream
+from agent_runtime.jsonutil import JsonValue, freeze_mapping, thaw_json
+from agent_runtime.lifecycle import CallbackStream, await_despite_cancellation
 from agent_runtime.ports import ManagedEventStream
+
+_STREAM_END = object()
 
 
 @dataclass
@@ -128,6 +130,22 @@ async def _release(resource: object) -> None:
         await result
 
 
+async def _await_deadline[T](awaitable: Awaitable[T], deadline: float) -> T:
+    remaining = deadline - asyncio.get_running_loop().time()
+    if remaining <= 0:
+        if asyncio.iscoroutine(awaitable):
+            awaitable.close()
+        raise TimeoutError("adapter timeout")
+    return await asyncio.wait_for(awaitable, timeout=remaining)
+
+
+def _json_object(value: Mapping[str, JsonValue] | Mapping[str, object]) -> dict[str, object]:
+    thawed = thaw_json(value)  # type: ignore[arg-type]
+    if not isinstance(thawed, dict):
+        raise AdapterError("expected a JSON object")
+    return thawed
+
+
 class OpenAIChatCompletionsModel:
     """Reference LowLevelModel. Vendor SDK types stay inside this adapter."""
 
@@ -153,21 +171,54 @@ class OpenAIChatCompletionsModel:
         create = self._client.chat.completions.create
         identity = StepIdentity(run_id="openai", step_no=0, model_round=0)
         kwargs = request_payload(request, default_model=self._default_model)
-        stream = None
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self._timeout
+        queue: asyncio.Queue[object] = asyncio.Queue()
+        stream_holder: list[Any] = []
+
+        async def produce() -> None:
+            stream = None
+            try:
+                async with asyncio.timeout(self._timeout):
+                    stream = await create(**kwargs)
+                    stream_holder.append(stream)
+                    self._active_streams.append(stream)
+                    async for event in normalize_chat_completion_stream(stream, identity=identity):
+                        await queue.put(event)
+                    await queue.put(_STREAM_END)
+            except Exception as exc:
+                await queue.put(exc)
+            finally:
+                if stream is not None:
+                    try:
+                        await _release(stream)
+                    except Exception:
+                        pass
+                    if stream in self._active_streams:
+                        self._active_streams.remove(stream)
+
+        producer = asyncio.create_task(produce(), name="openai-stream-producer")
         try:
-            async with asyncio.timeout(self._timeout):
-                stream = await create(**kwargs)
-                self._active_streams.append(stream)
-                async for event in normalize_chat_completion_stream(stream, identity=identity):
-                    yield event
+            while True:
+                item = await _await_deadline(queue.get(), deadline)
+                if item is _STREAM_END:
+                    return
+                if isinstance(item, AdapterError):
+                    raise item
+                if isinstance(item, Exception):
+                    raise AdapterError(str(item)) from item
+                yield item  # type: ignore[misc]
         except AdapterError:
             raise
         except Exception as exc:
             raise AdapterError(str(exc)) from exc
         finally:
-            if stream is not None:
-                await _release(stream)
+            if not producer.done():
+                producer.cancel()
+            await await_despite_cancellation(asyncio.gather(producer, return_exceptions=True))
+            for stream in list(stream_holder):
                 if stream in self._active_streams:
+                    await _release(stream)
                     self._active_streams.remove(stream)
 
     async def aclose(self) -> None:
@@ -200,7 +251,7 @@ def request_payload(request: ModelRequest, *, default_model: str | None = None) 
                 {
                     "id": call.call_id,
                     "type": "function",
-                    "function": {"name": call.name, "arguments": json.dumps(dict(call.arguments))},
+                    "function": {"name": call.name, "arguments": json.dumps(_json_object(call.arguments))},
                 }
                 for call in message.tool_calls
             ]
@@ -217,7 +268,7 @@ def request_payload(request: ModelRequest, *, default_model: str | None = None) 
                 "function": {
                     "name": spec.name,
                     "description": spec.description,
-                    "parameters": dict(spec.parameters),
+                    "parameters": _json_object(spec.parameters),
                 },
             }
             for spec in request.tools

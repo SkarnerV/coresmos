@@ -89,100 +89,132 @@ class DefaultRuntime:
         transcript: TranscriptPort = self._transcript_factory()
         application: ApplicationStatePort = self._application_factory(request.record_target)
         isolated = IsolatedObserver(self._observer if self._observer is not None else NoOpObserver())
-        isolated.start(scope)
         started = time_start()
-        snapshot_app = await wait_cancellable(
-            application.current(request.record_target),
-            control,
-            scope,
-        )
-        initial = (await self._provider.resolve(request, snapshot_app)).snapshot
-        if initial is None:
-            raise AgentRuntimeError("fixed provider returned no snapshot")
-        capabilities = CapabilitySession(initial, self._provider.bindings)
-        view = RunView(request=request, record_target=request.record_target)
-        session = RunSession(
-            request=request,
-            control=control,
-            scope=scope,
-            transcript=transcript,
-            capabilities=capabilities,
-            application=application,
-            view=view,
-            idle_timeout=self._idle_timeout,
-            observer=isolated,
-        )
-        ports = ExecutionPorts(
-            steps=DefaultStepProvider(
+        yielded_terminal = False
+        try:
+            isolated.start(scope)
+            snapshot_app = await wait_cancellable(
+                application.current(request.record_target),
+                control,
+                scope,
+            )
+            initial = (await self._provider.resolve(request, snapshot_app)).snapshot
+            if initial is None:
+                raise AgentRuntimeError("fixed provider returned no snapshot")
+            capabilities = CapabilitySession(initial, self._provider.bindings)
+            view = RunView(request=request, record_target=request.record_target)
+            session = RunSession(
+                request=request,
+                control=control,
+                scope=scope,
                 transcript=transcript,
                 capabilities=capabilities,
                 application=application,
                 view=view,
-                contributors=self._contributors,
-                budget=self._budget,
-                compressor=self._compressor,
-                extra_contributions=session.extra_contributions,
-            ),
-            model=DefaultModelPipeline(self._model, session),
-            tools=DefaultToolPipeline(
-                self._invoker,
-                session,
-                self._provider.bindings,
-                result_policy=self._result_policy,
-            ),
-            completion=DefaultCompletionPipeline(session, self._completion_policy),
-        )
-        terminal: RunStatus | None = None
-        yielded_terminal = False
-        try:
-            started_event = RunStarted(run_id=request.run_id, record_target=request.record_target)
-            await _observe(isolated, started_event)
-            yield started_event
-            for index, message in enumerate(request.input_items):
-                await transcript.record_input(
-                    run_id=request.run_id,
-                    record_target=request.record_target,
-                    message=message,
-                    logical_op_id=f"{request.run_id}:input:{index}",
+                idle_timeout=self._idle_timeout,
+                observer=isolated,
+            )
+            ports = ExecutionPorts(
+                steps=DefaultStepProvider(
+                    transcript=transcript,
+                    capabilities=capabilities,
+                    application=application,
+                    view=view,
+                    contributors=self._contributors,
+                    budget=self._budget,
+                    compressor=self._compressor,
+                    extra_contributions=session.extra_contributions,
+                ),
+                model=DefaultModelPipeline(self._model, session),
+                tools=DefaultToolPipeline(
+                    self._invoker,
+                    session,
+                    self._provider.bindings,
+                    result_policy=self._result_policy,
+                ),
+                completion=DefaultCompletionPipeline(session, self._completion_policy),
+            )
+            try:
+                started_event = RunStarted(run_id=request.run_id, record_target=request.record_target)
+                await _observe(isolated, started_event)
+                yield started_event
+                for index, message in enumerate(request.input_items):
+                    await transcript.record_input(
+                        run_id=request.run_id,
+                        record_target=request.record_target,
+                        message=message,
+                        logical_op_id=f"{request.run_id}:input:{index}",
+                    )
+                if isinstance(request.entry, CompletedEntry):
+                    event = await _commit_terminal(
+                        transcript,
+                        isolated,
+                        request.run_id,
+                        RunStatus.SUCCEEDED,
+                        RunSucceeded(run_id=request.run_id),
+                    )
+                    if not control.reason_set(StopReason.CONSUMER_CLOSED):
+                        yielded_terminal = True
+                        yield event
+                    return
+                loop = AgentLoop(ports, scope=scope, limits=request.limits, consumed=request.consumed)
+                async for event in loop.run(request):
+                    if control.reason_set(StopReason.CONSUMER_CLOSED):
+                        break
+                    if isinstance(event, RunWaiting):
+                        waiting = await _commit_terminal(transcript, isolated, request.run_id, RunStatus.WAITING, event)
+                        yielded_terminal = True
+                        if not control.reason_set(StopReason.CONSUMER_CLOSED):
+                            yield waiting
+                        return
+                    await _observe(isolated, event)
+                    yield event
+                succeeded = await _commit_terminal(
+                    transcript,
+                    isolated,
+                    request.run_id,
+                    RunStatus.SUCCEEDED,
+                    RunSucceeded(run_id=request.run_id),
                 )
-            if isinstance(request.entry, CompletedEntry):
-                await _finalize(transcript, request.run_id, RunStatus.SUCCEEDED)
                 if not control.reason_set(StopReason.CONSUMER_CLOSED):
                     yielded_terminal = True
-                    yield RunSucceeded(run_id=request.run_id)
-                return
-            loop = AgentLoop(ports, scope=scope, limits=request.limits, consumed=request.consumed)
-            async for event in loop.run(request):
-                if control.reason_set(StopReason.CONSUMER_CLOSED):
-                    break
-                await _observe(isolated, event)
-                yield event
-                if isinstance(event, RunWaiting):
-                    terminal = RunStatus.WAITING
-            if terminal is RunStatus.WAITING:
-                await _finalize(transcript, request.run_id, RunStatus.WAITING)
-                yielded_terminal = True
-                return
-            await _finalize(transcript, request.run_id, RunStatus.SUCCEEDED)
-            if not control.reason_set(StopReason.CONSUMER_CLOSED):
-                yielded_terminal = True
-                yield RunSucceeded(run_id=request.run_id)
-        except asyncio.CancelledError:
-            await await_despite_cancellation(_finalize(transcript, request.run_id, RunStatus.CANCELLED))
-            raise
-        except CancelledRunError as exc:
-            await _finalize(transcript, request.run_id, RunStatus.CANCELLED)
-            if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
-                reason = control.first_reason or StopReason(exc.reason)
-                yield RunCancelled(run_id=request.run_id, reason=reason)
-        except RecordingError as exc:
-            await _finalize(transcript, request.run_id, RunStatus.FAILED)
-            if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
-                yield RunFailed(run_id=request.run_id, error_type=type(exc).__name__, message=str(exc))
-        except Exception as exc:
-            await _finalize(transcript, request.run_id, RunStatus.FAILED)
-            if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
-                yield RunFailed(run_id=request.run_id, error_type=type(exc).__name__, message=str(exc))
+                    yield succeeded
+            except asyncio.CancelledError:
+                await await_despite_cancellation(_finalize(transcript, request.run_id, RunStatus.CANCELLED))
+                raise
+            except CancelledRunError as exc:
+                cancelled = await _commit_terminal(
+                    transcript,
+                    isolated,
+                    request.run_id,
+                    RunStatus.CANCELLED,
+                    RunCancelled(run_id=request.run_id, reason=control.first_reason or StopReason(exc.reason)),
+                )
+                if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
+                    yielded_terminal = True
+                    yield cancelled
+            except RecordingError as exc:
+                failed = await _commit_terminal(
+                    transcript,
+                    isolated,
+                    request.run_id,
+                    RunStatus.FAILED,
+                    RunFailed(run_id=request.run_id, error_type=type(exc).__name__, message=str(exc)),
+                )
+                if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
+                    yielded_terminal = True
+                    yield failed
+            except Exception as exc:
+                failed = await _commit_terminal(
+                    transcript,
+                    isolated,
+                    request.run_id,
+                    RunStatus.FAILED,
+                    RunFailed(run_id=request.run_id, error_type=type(exc).__name__, message=str(exc)),
+                )
+                if not control.reason_set(StopReason.CONSUMER_CLOSED) and not yielded_terminal:
+                    yielded_terminal = True
+                    yield failed
         finally:
             await await_despite_cancellation(
                 _observe(
@@ -207,6 +239,18 @@ async def _observe(observer: IsolatedObserver | None, event: object) -> None:
     if observer is None:
         return
     await observer.on_event(event)
+
+
+async def _commit_terminal(
+    transcript: TranscriptPort,
+    observer: IsolatedObserver,
+    run_id: str,
+    status: RunStatus,
+    event: RuntimeEvent,
+) -> RuntimeEvent:
+    await _finalize(transcript, run_id, status)
+    await _observe(observer, event)
+    return event
 
 
 def time_start() -> float:

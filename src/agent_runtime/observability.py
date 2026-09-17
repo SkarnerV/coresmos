@@ -67,12 +67,12 @@ class IsolatedObserver:
         except asyncio.QueueFull:
             pass
         if self._task is not None:
+            task = self._task
             try:
-                await await_despite_cancellation(
-                    asyncio.wait_for(asyncio.shield(self._task), timeout=self._offer_timeout)
-                )
+                await await_despite_cancellation(asyncio.wait_for(asyncio.shield(task), timeout=self._offer_timeout))
             except (TimeoutError, asyncio.CancelledError, Exception):
-                self._task.cancel()
+                task.cancel()
+                await await_despite_cancellation(asyncio.gather(task, return_exceptions=True))
 
     async def _pump(self) -> None:
         while True:

@@ -67,6 +67,13 @@ class TokenBudgetPolicy:
             for spec in tools
         )
 
+    def estimate_model_attempt(self, messages: Sequence[Message], tools: Sequence[ToolSpec]) -> int:
+        """Count prompt, tool schemas, call arguments, and reserved output for one model attempt.
+
+        Provider TokenUsage is recorded separately and must not be added here.
+        """
+        return self.estimate_messages(messages) + self.estimate_tools(tools) + self.reserved_output_tokens
+
     def available_for_prompt(self, tools: Sequence[ToolSpec]) -> int:
         reserved = self.reserved_output_tokens + self.estimate_tools(tools)
         available = self.max_prompt_tokens - reserved

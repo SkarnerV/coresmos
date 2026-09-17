@@ -13,7 +13,7 @@ from agent_runtime.contracts import (
     ReasoningDeltaEvent,
     TextDeltaEvent,
 )
-from agent_runtime.exceptions import AdapterError, CompletionProtocolError
+from agent_runtime.exceptions import AdapterError, BudgetExhaustedError, CompletionProtocolError
 from agent_runtime.lifecycle import CallbackStream, iterate_cancellable, raise_if_stopped, sleep_cancellable
 from agent_runtime.observability import timed
 from agent_runtime.policies import isolate_attempts
@@ -32,7 +32,9 @@ class DefaultModelPipeline:
 
     async def _stream(self, step: PreparedStep) -> AsyncIterator[ModelStepEvent]:
         recovery = step.request.recovery
-        attempts = max(1, recovery.remaining_attempts)
+        attempts = recovery.remaining_attempts
+        if attempts <= 0:
+            raise BudgetExhaustedError("remaining_attempts exhausted")
         last_error: BaseException | None = None
         for attempt in range(1, attempts + 1):
             raise_if_stopped(self._session.control)

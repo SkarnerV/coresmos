@@ -15,6 +15,7 @@ from agent_runtime.contracts import (
     ModelCompleted,
     ModelEntry,
     PendingRef,
+    PreparedStep,
     RunRequest,
     RuntimeEvent,
     RunWaiting,
@@ -96,22 +97,33 @@ class AgentLoop:
             return
         step_no = self._consumed.steps
         model_rounds = self._consumed.model_rounds
+        estimated_tokens = self._consumed.estimated_tokens
 
         async def allocate(*, consume_model: bool) -> StepIdentity:
             nonlocal step_no, model_rounds
             raise_if_stopped(self._scope.control)
             if self._limits.max_steps is not None and step_no + 1 > self._limits.max_steps:
                 raise BudgetExhaustedError("max_steps exhausted")
-            if (
-                consume_model
-                and self._limits.max_model_rounds is not None
-                and model_rounds + 1 > self._limits.max_model_rounds
-            ):
-                raise BudgetExhaustedError("max_model_rounds exhausted")
+            if consume_model:
+                if self._limits.recovery.remaining_attempts <= 0:
+                    raise BudgetExhaustedError("remaining_attempts exhausted")
+                if (
+                    self._limits.max_estimated_tokens is not None
+                    and estimated_tokens >= self._limits.max_estimated_tokens
+                ):
+                    raise BudgetExhaustedError("max_estimated_tokens exhausted")
+                if self._limits.max_model_rounds is not None and model_rounds + 1 > self._limits.max_model_rounds:
+                    raise BudgetExhaustedError("max_model_rounds exhausted")
             step_no += 1
             if consume_model:
                 model_rounds += 1
             return StepIdentity(run_id=request.run_id, step_no=step_no, model_round=model_rounds)
+
+        def consume_estimated(prepared: PreparedStep) -> None:
+            nonlocal estimated_tokens
+            estimated_tokens += prepared.estimated_tokens
+            if self._limits.max_estimated_tokens is not None and estimated_tokens > self._limits.max_estimated_tokens:
+                raise BudgetExhaustedError("max_estimated_tokens exhausted")
 
         if isinstance(entry, ToolBatchEntry):
             identity = await allocate(consume_model=False)
@@ -162,6 +174,7 @@ class AgentLoop:
                 self._scope.control,
                 self._scope,
             )
+            consume_estimated(prepared)
             model_done: ModelCompleted | None = None
             async for model_event in iterate_strict(
                 self._ports.model.stream(prepared),

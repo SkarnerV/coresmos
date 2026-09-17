@@ -46,7 +46,13 @@ def _payload_key(value: object) -> object:
 class _CommittedOp:
     kind: LogicalOpKind
     payload: object
+    run_id: str | None = None
+    step_no: int | None = None
+    record_target: RecordTarget | None = None
+    logical_op_id: str | None = None
+    previous_receipt: MessageReceipt | BatchReceipt | None = None
     message_receipt: MessageReceipt | None = None
+    message_receipts: tuple[MessageReceipt, ...] = ()
     batch_receipt: BatchReceipt | None = None
 
 
@@ -79,11 +85,55 @@ class MemoryTranscript:
             self._fail_ops.discard(logical_op_id)
             raise RecordingError(f"injected write failure for {logical_op_id}")
 
-    def _replay(self, logical_op_id: str, kind: LogicalOpKind, payload: object) -> _CommittedOp:
+    def _replay(
+        self,
+        logical_op_id: str,
+        kind: LogicalOpKind,
+        payload: object,
+        *,
+        run_id: str,
+        step_no: int | None = None,
+        record_target: RecordTarget | None = None,
+        previous_receipt: MessageReceipt | BatchReceipt | None = None,
+    ) -> _CommittedOp:
         existing = self._ops[logical_op_id]
         if existing.kind is not kind or existing.payload != _payload_key(payload):
             raise IdempotencyError(f"logical op {logical_op_id} reused with a different payload")
+        if existing.run_id != run_id or existing.step_no != step_no or existing.record_target != record_target:
+            raise IdempotencyError(f"logical op {logical_op_id} reused with a different identity")
+        if previous_receipt is not None and existing.previous_receipt != previous_receipt:
+            raise ReceiptMismatchError("previous_receipt does not match the committed operation")
         return existing
+
+    def _store_op(
+        self,
+        logical_op_id: str,
+        *,
+        kind: LogicalOpKind,
+        payload: object,
+        run_id: str,
+        step_no: int | None = None,
+        record_target: RecordTarget | None = None,
+        previous_receipt: MessageReceipt | BatchReceipt | None = None,
+        message_receipt: MessageReceipt | None = None,
+        message_receipts: tuple[MessageReceipt, ...] = (),
+        batch_receipt: BatchReceipt | None = None,
+    ) -> _CommittedOp:
+        receipts = message_receipts if message_receipts else ((message_receipt,) if message_receipt is not None else ())
+        committed = _CommittedOp(
+            kind=kind,
+            payload=_payload_key(payload),
+            run_id=run_id,
+            step_no=step_no,
+            record_target=record_target,
+            logical_op_id=logical_op_id,
+            previous_receipt=previous_receipt,
+            message_receipt=receipts[0] if receipts else message_receipt,
+            message_receipts=receipts,
+            batch_receipt=batch_receipt,
+        )
+        self._ops[logical_op_id] = committed
+        return committed
 
     def _append(self, record_target: RecordTarget, message: Message) -> None:
         assert message.message_id is not None
@@ -117,7 +167,13 @@ class MemoryTranscript:
             self._check_fail(logical_op_id)
             payload = message
             if logical_op_id in self._ops:
-                existing = self._replay(logical_op_id, LogicalOpKind.INPUT, payload)
+                existing = self._replay(
+                    logical_op_id,
+                    LogicalOpKind.INPUT,
+                    payload,
+                    run_id=run_id,
+                    record_target=record_target,
+                )
                 assert existing.message_receipt is not None
                 return replace(existing.message_receipt, created=False)
             message_id = self._next_id("msg", run_id)
@@ -131,7 +187,14 @@ class MemoryTranscript:
                 logical_op_id=logical_op_id,
                 created=True,
             )
-            self._ops[logical_op_id] = _CommittedOp(LogicalOpKind.INPUT, _payload_key(payload), message_receipt=receipt)
+            self._store_op(
+                logical_op_id,
+                kind=LogicalOpKind.INPUT,
+                payload=payload,
+                run_id=run_id,
+                record_target=record_target,
+                message_receipt=receipt,
+            )
             return receipt
 
     async def record_text_delta(
@@ -149,7 +212,15 @@ class MemoryTranscript:
             self._check_fail(logical_op_id)
             payload = (text, attempt)
             if logical_op_id in self._ops:
-                existing = self._replay(logical_op_id, LogicalOpKind.TEXT_DELTA, payload)
+                existing = self._replay(
+                    logical_op_id,
+                    LogicalOpKind.TEXT_DELTA,
+                    payload,
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    previous_receipt=previous_receipt,
+                )
                 assert existing.message_receipt is not None
                 return replace(existing.message_receipt, created=False)
             if previous_receipt is not None and previous_receipt.message_id not in self._messages:
@@ -177,8 +248,15 @@ class MemoryTranscript:
                 logical_op_id=logical_op_id,
                 created=created,
             )
-            self._ops[logical_op_id] = _CommittedOp(
-                LogicalOpKind.TEXT_DELTA, _payload_key(payload), message_receipt=receipt
+            self._store_op(
+                logical_op_id,
+                kind=LogicalOpKind.TEXT_DELTA,
+                payload=payload,
+                run_id=run_id,
+                step_no=step_no,
+                record_target=record_target,
+                previous_receipt=previous_receipt,
+                message_receipt=receipt,
             )
             return receipt
 
@@ -199,7 +277,15 @@ class MemoryTranscript:
             self._check_fail(logical_op_id)
             payload = (text, reasoning, tuple(tool_calls), attempt)
             if logical_op_id in self._ops:
-                existing = self._replay(logical_op_id, LogicalOpKind.TEXT_FINAL, payload)
+                existing = self._replay(
+                    logical_op_id,
+                    LogicalOpKind.TEXT_FINAL,
+                    payload,
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    previous_receipt=previous_receipt,
+                )
                 assert existing.message_receipt is not None
                 return replace(existing.message_receipt, created=False)
             if previous_receipt is not None:
@@ -241,8 +327,15 @@ class MemoryTranscript:
                 logical_op_id=logical_op_id,
                 created=created,
             )
-            self._ops[logical_op_id] = _CommittedOp(
-                LogicalOpKind.TEXT_FINAL, _payload_key(payload), message_receipt=receipt
+            self._store_op(
+                logical_op_id,
+                kind=LogicalOpKind.TEXT_FINAL,
+                payload=payload,
+                run_id=run_id,
+                step_no=step_no,
+                record_target=record_target,
+                previous_receipt=previous_receipt,
+                message_receipt=receipt,
             )
             return receipt
 
@@ -263,7 +356,15 @@ class MemoryTranscript:
             self._check_fail(logical_op_id)
             payload = (tuple(calls), assistant_text, reasoning)
             if logical_op_id in self._ops:
-                existing = self._replay(logical_op_id, LogicalOpKind.TOOL_CALLS, payload)
+                existing = self._replay(
+                    logical_op_id,
+                    LogicalOpKind.TOOL_CALLS,
+                    payload,
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    previous_receipt=previous_receipt,
+                )
                 assert existing.batch_receipt is not None
                 return replace(existing.batch_receipt, created=False)
             if previous_receipt is not None:
@@ -303,8 +404,15 @@ class MemoryTranscript:
                 assistant_message_id=message_id,
                 created=True,
             )
-            self._ops[logical_op_id] = _CommittedOp(
-                LogicalOpKind.TOOL_CALLS, _payload_key(payload), batch_receipt=receipt
+            self._store_op(
+                logical_op_id,
+                kind=LogicalOpKind.TOOL_CALLS,
+                payload=payload,
+                run_id=run_id,
+                step_no=step_no,
+                record_target=record_target,
+                previous_receipt=previous_receipt,
+                batch_receipt=receipt,
             )
             return receipt
 
@@ -322,25 +430,16 @@ class MemoryTranscript:
             self._check_fail(logical_op_id)
             payload = tuple(results)
             if logical_op_id in self._ops:
-                existing = self._replay(logical_op_id, LogicalOpKind.TOOL_RESULTS, payload)
-                assert existing.message_receipt is not None
-                # Replay returns the first receipt; reconstruct from committed messages.
-                receipts: list[MessageReceipt] = []
-                for result in results:
-                    for message_id, message in self._messages.items():
-                        if message.tool_call_id == result.call_id:
-                            receipts.append(
-                                MessageReceipt(
-                                    message_id=message_id,
-                                    run_id=run_id,
-                                    step_no=step_no,
-                                    record_target=record_target,
-                                    logical_op_id=logical_op_id,
-                                    created=False,
-                                )
-                            )
-                            break
-                return tuple(receipts)
+                existing = self._replay(
+                    logical_op_id,
+                    LogicalOpKind.TOOL_RESULTS,
+                    payload,
+                    run_id=run_id,
+                    step_no=step_no,
+                    record_target=record_target,
+                    previous_receipt=previous_receipt,
+                )
+                return tuple(replace(receipt, created=False) for receipt in existing.message_receipts)
             committed = self._ops.get(previous_receipt.logical_op_id)
             if committed is None or committed.batch_receipt is None:
                 raise ReceiptMismatchError("previous_receipt is not a committed tool-call batch")
@@ -387,11 +486,15 @@ class MemoryTranscript:
                 )
             for stored_message in pending_messages:
                 self._append(record_target, stored_message)
-            first = receipts_out[0] if receipts_out else None
-            self._ops[logical_op_id] = _CommittedOp(
-                LogicalOpKind.TOOL_RESULTS,
-                _payload_key(payload),
-                message_receipt=first,
+            self._store_op(
+                logical_op_id,
+                kind=LogicalOpKind.TOOL_RESULTS,
+                payload=payload,
+                run_id=run_id,
+                step_no=step_no,
+                record_target=record_target,
+                previous_receipt=previous_receipt,
+                message_receipts=tuple(receipts_out),
             )
             return tuple(receipts_out)
 
@@ -401,10 +504,10 @@ class MemoryTranscript:
             self._check_fail(op_id)
             payload = status.value
             if op_id in self._ops:
-                self._replay(op_id, LogicalOpKind.RUN_FINAL, payload)
+                self._replay(op_id, LogicalOpKind.RUN_FINAL, payload, run_id=run_id)
                 return
             self._run_status[run_id] = status
-            self._ops[op_id] = _CommittedOp(LogicalOpKind.RUN_FINAL, _payload_key(payload))
+            self._store_op(op_id, kind=LogicalOpKind.RUN_FINAL, payload=payload, run_id=run_id)
 
 
 def as_transcript_port(transcript: MemoryTranscript) -> TranscriptPort:
