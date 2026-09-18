@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="6" time="1.168" timestamp="2026-09-18T09:27:28.055216+08:00" hostname="DESKTOP-2DUPP2M"><testcase classname="acceptance.round5.test_integration_boundaries" name="test_new_run_does_not_reuse_another_transcripts_compressed_messages" time="0.004"><failure message="AssertionError: Second run received stale history: ['first question']&#10;assert ['first question'] == ['short histo...ond question']&#10;  &#10;  At index 0 diff: 'first question' != 'short history'&#10;  Right contains one more item: 'second question'&#10;  Use -v to get more diff">acceptance\round5\test_integration_boundaries.py:61: in test_new_run_does_not_reuse_another_transcripts_compressed_messages
+    assert actual == ["short history", "second question"], f"Second run received stale history: {actual}"
+E   AssertionError: Second run received stale history: ['first question']
+E   assert ['first question'] == ['short histo...ond question']
+E     
+E     At index 0 diff: 'first question' != 'short history'
+E     Right contains one more item: 'second question'
+E     Use -v to get more diff</failure></testcase><testcase classname="acceptance.round5.test_integration_boundaries" name="test_resolver_fallback_executes_the_selected_providers_binding" time="0.005"><failure message="AssertionError: Fallback resolved the wrong executor: ['skipped-backend']&#10;assert ['skipped-backend'] == ['selected-backend']&#10;  &#10;  At index 0 diff: 'skipped-backend' != 'selected-backend'&#10;  Use -v to get more diff">acceptance\round5\test_integration_boundaries.py:89: in test_resolver_fallback_executes_the_selected_providers_binding
+    assert invoked == ["selected-backend"], f"Fallback resolved the wrong executor: {invoked}"
+E   AssertionError: Fallback resolved the wrong executor: ['skipped-backend']
+E   assert ['skipped-backend'] == ['selected-backend']
+E     
+E     At index 0 diff: 'skipped-backend' != 'selected-backend'
+E     Use -v to get more diff</failure></testcase><testcase classname="acceptance.round5.test_integration_boundaries" name="test_stop_interrupts_initial_capability_resolution[StopReason.USER_STOP]" time="0.310"><failure message="AssertionError: user_stop did not interrupt the pending capability provider&#10;assert False">acceptance\round5\test_integration_boundaries.py:131: in test_stop_interrupts_initial_capability_resolution
+    assert stopped_while_provider_blocked, f"{reason.value} did not interrupt the pending capability provider"
+E   AssertionError: user_stop did not interrupt the pending capability provider
+E   assert False</failure></testcase><testcase classname="acceptance.round5.test_integration_boundaries" name="test_stop_interrupts_initial_capability_resolution[StopReason.HOST_CANCEL]" time="0.317"><failure message="AssertionError: host_cancel did not interrupt the pending capability provider&#10;assert False">acceptance\round5\test_integration_boundaries.py:131: in test_stop_interrupts_initial_capability_resolution
+    assert stopped_while_provider_blocked, f"{reason.value} did not interrupt the pending capability provider"
+E   AssertionError: host_cancel did not interrupt the pending capability provider
+E   assert False</failure></testcase><testcase classname="acceptance.round5.test_integration_boundaries" name="test_stop_interrupts_initial_capability_resolution[StopReason.DEADLINE]" time="0.303"><failure message="AssertionError: deadline did not interrupt the pending capability provider&#10;assert False">acceptance\round5\test_integration_boundaries.py:131: in test_stop_interrupts_initial_capability_resolution
+    assert stopped_while_provider_blocked, f"{reason.value} did not interrupt the pending capability provider"
+E   AssertionError: deadline did not interrupt the pending capability provider
+E   assert False</failure></testcase><testcase classname="acceptance.round5.test_integration_boundaries" name="test_recording_required_flag_cannot_bypass_receipt_validation" time="0.001"><failure message="Failed: DID NOT RAISE ReceiptMismatchError">acceptance\round5\test_integration_boundaries.py:148: in test_recording_required_flag_cannot_bypass_receipt_validation
+    with pytest.raises(ReceiptMismatchError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ReceiptMismatchError</failure></testcase></testsuite></testsuites>

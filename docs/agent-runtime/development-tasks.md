@@ -1,6 +1,6 @@
 **Agent Runtime v0.1 开发任务拆分**
 
-依据：[集成层设计 v2](C:/codebase/coresmos/agent-runtime-integration-design.md)、[技术选型](C:/codebase/coresmos/agent-runtime-technology-selection.md)。
+依据：[集成层设计 v2](integration-design.md)、[技术选型](technology-selection.md)。
 
 拆为 15 项公共库任务和 7 项公司内部接入任务。当前仓库只有设计文档，以下任务均为待开发。每项交付包含实现、对应测试和必要的接口说明；依赖沿用技术选型，不另加技术栈。文中的代码路径是计划归属。
 
@@ -141,7 +141,7 @@ M0–M2 使用合成数据，不依赖公司代码或网络。内部基线核对
 
 **T15 制品、兼容矩阵与接入文档**
 
-依赖：T14。交付：固定版本 wheel / sdist、锁定参考环境、版本说明、`docs/adapter-guide.md` 和最终 CI 配置。
+依赖：T14。交付：固定版本 wheel / sdist、锁定参考环境、版本说明、`docs/agent-runtime/adapter-guide.md` 和最终 CI 配置。
 
 - 检查基础安装、openai、otel 及二者组合；验证依赖下界和锁定组合，按结果确认兼容范围。构建工具及隔离构建依赖也固定版本。
 - 执行计划中的 Linux Python 3.12 / 3.13 / 3.14、Windows Python 3.12 验证；从源码目录外执行已安装包，检查 py.typed、示例及契约支持可用。

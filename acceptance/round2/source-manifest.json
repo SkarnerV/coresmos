@@ -4,24 +4,24 @@
     "sha256": "941C86EDED27A1AF04F67F5D5CB49DC508DAB4906BD01429772C3D1483F7DC3B"
   },
   {
-    "path": "agent-runtime-development-tasks.md",
-    "sha256": "C9ECF3BDA12753AF64B2F1FEA21BAE08C50B6729203B68D9C8BF5DFB56F7137F"
+    "path": "docs/agent-runtime/development-tasks.md",
+    "sha256": "0BCA01AD60B4B078F0ABBE1BF4F8F9DF53906B01DCC0BFB0BE23528DDD8B555F"
   },
   {
-    "path": "agent-runtime-integration-design.md",
-    "sha256": "F6CCFD3AA758B620E5D6526BD66ABC49131BB6A97A2FBA3755786C3A6CDDC30E"
+    "path": "docs/agent-runtime/integration-design.md",
+    "sha256": "F735256A7BB2C674D12EC555F465CD3C415513E3FE6A56BC20BD824D7DA7358C"
   },
   {
-    "path": "agent-runtime-technology-selection.md",
-    "sha256": "DD08F955160C2DA1C79432F246EC9009F765A9638CA205E197B4E9E1F5DEC10C"
+    "path": "docs/agent-runtime/technology-selection.md",
+    "sha256": "7614802E9C03F3458F4BC58EB58850A4375D7D1EE761248673BCD0A53EFEE33A"
   },
   {
-    "path": "docs\\adapter-guide.md",
-    "sha256": "0E275918A22ADF945D1FAA67B94A582F66E5028DD73EE330A42BBE3730D34C29"
+    "path": "docs\\agent-runtime\\adapter-guide.md",
+    "sha256": "4DA29CC8B30941F752FEFFA03E31D71923C461BE317FB064B9438F1C0979588B"
   },
   {
-    "path": "docs\\upgrade-notes.md",
-    "sha256": "18424FD9D52D8D6F5255FCDFDAAC5F73AF94543747D401A0C1A45DC59F6FFB1D"
+    "path": "docs\\agent-runtime\\upgrade-notes.md",
+    "sha256": "29FDBDF4B60F8D271FE73BD92511B54840B0FC4E12EE5EAF5F58DCB8E492D2BD"
   },
   {
     "path": "pyproject.toml",

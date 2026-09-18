@@ -1,6 +1,6 @@
 # 设计缺口补齐记录（Harness、装配、压缩、取消）
 
-补齐日期：2026-09-18。环境：macOS 15.6 arm64、Python 3.12.13。对照：[集成设计](agent-runtime-integration-design.md) §4–§14。
+补齐日期：2026-09-18。环境：macOS 15.6 arm64、Python 3.12.13。对照：[集成设计](../integration-design.md) §4–§14。
 
 **结果：设计审查列出的 6 项缺口已在库内落地。** 完整测试 **108 passed**，覆盖率 **92%**；Ruff 与 Mypy 通过。契约套件现有 20 个可绑定场景（覆盖设计 §13 的 13 类行为，外加目标切换后继续、幂等重放等）。公司内部接入与 CI 矩阵仍不在本轮范围。
 
@@ -61,12 +61,12 @@
 
 | 检查 | 结果 | 材料 |
 | --- | --- | --- |
-| 本轮 10 项边界用例 | 10 passed | [输出](acceptance/round4/fix-boundary-results.txt) |
-| 完整测试 | **94 passed**，覆盖率 90% | [输出](acceptance/round4/fix-full-results.txt)、[JUnit](acceptance/round4/fix-full-results.xml) |
-| Ruff check / format / mypy | 通过；55 个文件格式、32 个源文件类型检查 | [输出](acceptance/round4/fix-lint-results.txt) |
-| sdist → wheel 重建 | 通过 | [哈希](acceptance/round4/fix-artifact-hashes.txt) |
-| 四种安装组合各 5 个 Harness 场景 | 全部通过（基础、OpenAI 2.45.0、OTel 1.43.0、组合） | [输出](acceptance/round4/fix-installed-scenes.txt) |
-| OpenAI 2.54.0 / 2.45.0 HTTP mock | 各 3 个场景通过，各进入 handler 一次 | [locked](acceptance/round4/fix-sdk-locked.txt)、[floor](acceptance/round4/fix-sdk-floor.txt) |
+| 本轮 10 项边界用例 | 10 passed | [输出](../../../acceptance/round4/fix-boundary-results.txt) |
+| 完整测试 | **94 passed**，覆盖率 90% | [输出](../../../acceptance/round4/fix-full-results.txt)、[JUnit](../../../acceptance/round4/fix-full-results.xml) |
+| Ruff check / format / mypy | 通过；55 个文件格式、32 个源文件类型检查 | [输出](../../../acceptance/round4/fix-lint-results.txt) |
+| sdist → wheel 重建 | 通过 | [哈希](../../../acceptance/round4/fix-artifact-hashes.txt) |
+| 四种安装组合各 5 个 Harness 场景 | 全部通过（基础、OpenAI 2.45.0、OTel 1.43.0、组合） | [输出](../../../acceptance/round4/fix-installed-scenes.txt) |
+| OpenAI 2.54.0 / 2.45.0 HTTP mock | 各 3 个场景通过，各进入 handler 一次 | [locked](../../../acceptance/round4/fix-sdk-locked.txt)、[floor](../../../acceptance/round4/fix-sdk-floor.txt) |
 
 补充边界核对（不计入用例数）：单轮成功运行只预留一次估算；上限放宽到两次估算时重试被允许；关闭超时后无残留任务且 `aclose()` 正常返回。
 
@@ -91,7 +91,7 @@
 
 验收日期：2026-09-18（Asia/Shanghai）。本机：Windows、Python 3.12.13。
 代码基线：`0e4ef2bfeb66d5fd13d62a98dcf47ea57639ebc7`。
-依据：[集成设计](agent-runtime-integration-design.md)、[B01–B07 修复计划](agent-runtime-fix-plan.md)及[历史验收报告](agent-runtime-reacceptance-report.md)。
+依据：[集成设计](../integration-design.md)、[B01–B07 修复计划](../fix-plan.md)及[历史验收报告](round2-reacceptance.md)。
 
 **结论：仍不通过公共 v0.1 验收。** 原有 84 项全部通过；本轮新增 10 项边界用例，6 项通过、4 项失败，完整结果为 **90 passed、4 failed**，覆盖率 90%。剩余问题归为 3 类，分别关联 B04、B07、B02。最新提交中的“B01–B07 已修复”结论需要收窄。
 
@@ -159,18 +159,18 @@ GitHub CI 平台矩阵已核实通过，历史报告中的“未取得 CI 实际
 
 | 检查 | 结果 | 材料 |
 | --- | --- | --- |
-| 提交自带完整测试 | 84 passed，覆盖率 90% | [基线输出](acceptance/round4/baseline-results.txt) |
-| 新增边界用例 | 6 passed、4 failed | [用例](acceptance/round4/test_fix_boundaries.py)、[输出](acceptance/round4/boundary-results.txt) |
-| 加入新增用例后的完整测试 | 90 passed、4 failed，覆盖率 90% | [完整输出](acceptance/round4/full-results.txt)、[JUnit](acceptance/round4/full-results.xml) |
-| Ruff check / format / mypy | 通过；55 个 Python 文件格式、32 个源文件类型检查 | [检查输出](acceptance/round4/lint-results.txt) |
-| sdist → wheel | 重建成功 | [哈希与源码清单](acceptance/round4/source-manifest.json) |
-| 基础安装，无 extras | 5 个公开 Harness 场景通过 | [结果](acceptance/round4/installed-base.txt) |
-| OpenAI 下界 2.45.0 | 5 个 Harness 场景通过 | [结果](acceptance/round4/installed-openai-floor.txt) |
-| OTel API 下界 1.43.0 | 5 个 Harness 场景通过 | [结果](acceptance/round4/installed-otel-floor.txt) |
-| OpenAI 2.54.0 + OTel API 1.44.0 | 5 个 Harness 场景通过 | [结果](acceptance/round4/installed-combined.txt) |
-| OpenAI 2.45.0 HTTP mock | 3 个请求场景通过，各进入 HTTP handler 一次 | [结果](acceptance/round4/sdk-floor.txt) |
-| OpenAI 2.54.0 HTTP mock | 同上 | [结果](acceptance/round4/sdk-locked.txt) |
-| CI 矩阵及 extras | 5 个 job 全部 success | [GitHub run](https://github.com/SkarnerV/coresmos/actions/runs/35243101597)、[原始结果](acceptance/round4/ci-results.json) |
+| 提交自带完整测试 | 84 passed，覆盖率 90% | [基线输出](../../../acceptance/round4/baseline-results.txt) |
+| 新增边界用例 | 6 passed、4 failed | [用例](../../../acceptance/round4/test_fix_boundaries.py)、[输出](../../../acceptance/round4/boundary-results.txt) |
+| 加入新增用例后的完整测试 | 90 passed、4 failed，覆盖率 90% | [完整输出](../../../acceptance/round4/full-results.txt)、[JUnit](../../../acceptance/round4/full-results.xml) |
+| Ruff check / format / mypy | 通过；55 个 Python 文件格式、32 个源文件类型检查 | [检查输出](../../../acceptance/round4/lint-results.txt) |
+| sdist → wheel | 重建成功 | [哈希与源码清单](../../../acceptance/round4/source-manifest.json) |
+| 基础安装，无 extras | 5 个公开 Harness 场景通过 | [结果](../../../acceptance/round4/installed-base.txt) |
+| OpenAI 下界 2.45.0 | 5 个 Harness 场景通过 | [结果](../../../acceptance/round4/installed-openai-floor.txt) |
+| OTel API 下界 1.43.0 | 5 个 Harness 场景通过 | [结果](../../../acceptance/round4/installed-otel-floor.txt) |
+| OpenAI 2.54.0 + OTel API 1.44.0 | 5 个 Harness 场景通过 | [结果](../../../acceptance/round4/installed-combined.txt) |
+| OpenAI 2.45.0 HTTP mock | 3 个请求场景通过，各进入 HTTP handler 一次 | [结果](../../../acceptance/round4/sdk-floor.txt) |
+| OpenAI 2.54.0 HTTP mock | 同上 | [结果](../../../acceptance/round4/sdk-locked.txt) |
+| CI 矩阵及 extras | 5 个 job 全部 success | [GitHub run](https://github.com/SkarnerV/coresmos/actions/runs/35243101597)、[原始结果](../../../acceptance/round4/ci-results.json) |
 
 CI 已核对 `headSha` 等于本轮完整提交 SHA，包含 Ubuntu Python 3.12、3.13、3.14，Windows Python 3.12，以及 Ubuntu Python 3.12 extras job。新增边界用例需随修复提交后再进入 CI。
 

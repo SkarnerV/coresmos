@@ -1,0 +1,126 @@
+diff --git a/src/agent_runtime/capabilities/providers.py b/src/agent_runtime/capabilities/providers.py
+index 1f5cfe0..4493222 100644
+--- a/src/agent_runtime/capabilities/providers.py
++++ b/src/agent_runtime/capabilities/providers.py
+@@ -46,6 +46,12 @@ class BindingRegistry:
+     def names(self, ref: BindingSetRef) -> frozenset[str]:
+         return frozenset(self._versions.get(ref.version, {}))
+ 
++    def mapping(self, ref: BindingSetRef) -> dict[str, str]:
++        table = self._versions.get(ref.version)
++        if table is None:
++            raise CapabilityError(f"unknown binding set {ref.version}")
++        return dict(table)
++
+ 
+ @runtime_checkable
+ class BindingSource(Protocol):
+@@ -115,6 +121,11 @@ class ResolverChain:
+             if result.kind is MatchKind.NO_MATCH:
+                 last = result
+                 continue
++            if result.snapshot is not None and isinstance(provider, BindingSource):
++                source = provider.bindings
++                if source is not self._bindings:
++                    binding_ref = self._bindings.publish(source.mapping(result.snapshot.binding_ref))
++                    result = replace(result, snapshot=replace(result.snapshot, binding_ref=binding_ref))
+             return result
+         return last
+ 
+@@ -143,9 +154,8 @@ class CapabilitySession:
+     ) -> CapabilitySnapshot:
+         for spec in tools:
+             check_tool_spec(spec)
+-        previous = self._bindings.names(self._current.binding_ref)
+-        mapping = {name: "default" for name in previous}
+-        mapping.update({spec.name: "default" for spec in tools})
++        previous = self._bindings.mapping(self._current.binding_ref)
++        mapping = {spec.name: previous.get(spec.name, "default") for spec in tools}
+         if extra_bindings:
+             mapping.update(extra_bindings)
+         binding_ref = self._bindings.publish(mapping)
+diff --git a/src/agent_runtime/context/manager.py b/src/agent_runtime/context/manager.py
+index 55d609f..a47eeb6 100644
+--- a/src/agent_runtime/context/manager.py
++++ b/src/agent_runtime/context/manager.py
+@@ -100,6 +100,29 @@ def contribution_digest(items: Sequence[ContextContribution]) -> str:
+     return digest.hexdigest()[:16]
+ 
+ 
++def message_digest(messages: Sequence[Message]) -> str:
++    """Hash every field consumed by the compressor for this prompt."""
++    digest = hashlib.sha256()
++    for message in messages:
++        digest.update(
++            repr(
++                (
++                    message.role,
++                    message.content,
++                    tuple(
++                        (call.call_id, call.name, tuple(sorted(call.arguments.items()))) for call in message.tool_calls
++                    ),
++                    message.tool_call_id,
++                    message.name,
++                    message.reasoning,
++                    message.message_id,
++                )
++            ).encode()
++        )
++        digest.update(b"\0")
++    return digest.hexdigest()[:16]
++
++
+ @dataclass
+ class RunView:
+     request: RunRequest
+@@ -151,6 +174,7 @@ class DefaultStepProvider:
+                 capabilities.version,
+                 application.version,
+                 contribution_digest(merged),
++                message_digest(prompt),
+                 str(available),
+             )
+         )
+diff --git a/src/agent_runtime/recording.py b/src/agent_runtime/recording.py
+index bc87990..0f9b28c 100644
+--- a/src/agent_runtime/recording.py
++++ b/src/agent_runtime/recording.py
+@@ -505,9 +505,6 @@ class MemoryTranscript:
+                     previous_receipt=previous_receipt,
+                 )
+                 return tuple(replace(receipt, created=False) for receipt in existing.message_receipts)
+-            if not previous_receipt.recording_required:
+-                # The batch declared that it is outside the model transcript; nothing to pair.
+-                return ()
+             committed = self._ops.get(previous_receipt.logical_op_id)
+             if committed is None or committed.batch_receipt is None:
+                 raise ReceiptMismatchError("previous_receipt is not a committed tool-call batch")
+@@ -516,6 +513,9 @@ class MemoryTranscript:
+                 raise ReceiptMismatchError("previous_receipt does not match committed batch identity")
+             if stored.run_id != run_id or stored.step_no != step_no or stored.record_target != record_target:
+                 raise ReceiptMismatchError("previous_receipt is bound to a different run, step, or target")
++            if not stored.recording_required:
++                # The committed batch is outside the model transcript; nothing to pair.
++                return ()
+             known = {record.call_id: record for record in stored.calls}
+             pending_messages: list[Message] = []
+             receipts_out: list[MessageReceipt] = []
+diff --git a/src/agent_runtime/runner.py b/src/agent_runtime/runner.py
+index 76adfca..c69e375 100644
+--- a/src/agent_runtime/runner.py
++++ b/src/agent_runtime/runner.py
+@@ -149,7 +149,13 @@ class DefaultRuntime:
+                 control,
+                 scope,
+             )
+-            initial = accept_resolution(await self._provider.resolve(request, snapshot_app))
++            initial = accept_resolution(
++                await wait_cancellable(
++                    self._provider.resolve(request, snapshot_app),
++                    control,
++                    scope,
++                )
++            )
+             capabilities = CapabilitySession(initial, self._bindings)
+             view = RunView(request=request, record_target=request.record_target)
+             ledger = execution_budget(request.limits, request.consumed)

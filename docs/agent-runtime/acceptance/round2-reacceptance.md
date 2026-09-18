@@ -1,10 +1,10 @@
 # Agent Runtime 第三轮验收报告（B01–B07 修复后）
 
-验收日期：2026-09-17。环境：macOS 15.6 arm64、Python 3.12.13。修复前代码基线：`648a5b7dfa49c594f4b615c2ff3d23bcc793ed6a`。依据：[修复计划](agent-runtime-fix-plan.md)。
+验收日期：2026-09-17。环境：macOS 15.6 arm64、Python 3.12.13。修复前代码基线：`648a5b7dfa49c594f4b615c2ff3d23bcc793ed6a`。依据：[修复计划](../fix-plan.md)。
 
 **结论：B01–B07 已修复并通过本机公共门槛检查；完整公共 v0.1 仍不标记通过。** 本机 84 项 pytest、Ruff、format、mypy、四种安装组合、两个 OpenAI 版本的 MockTransport 场景全部通过。GitHub CI 矩阵（Linux 3.12/3.13/3.14 与 Windows 3.12）未在本环境实际执行。
 
-本报告接续下方第二轮记录和[第一轮验收报告](agent-runtime-acceptance-report.md)。I01–I07 公司内部接入仍不在本次公共库范围内。
+本报告接续下方第二轮记录和[第一轮验收报告](round1-acceptance.md)。I01–I07 公司内部接入仍不在本次公共库范围内。
 
 **1. 修复对应关系**
 
@@ -64,11 +64,11 @@ wheel 由本次重建的 sdist 构建。
 
 **5. 复验材料**
 
-- [B01–B07 契约用例](acceptance/round2/test_reacceptance_contracts.py)
-- [全套结果：84 passed](acceptance/round2/full-results.txt) / [JUnit](acceptance/round2/full-results.xml)
-- [契约 10 passed](acceptance/round2/contract-results.txt)
-- [SDK 2.54.0](acceptance/round2/sdk-locked-results.txt)、[SDK 2.45.0](acceptance/round2/sdk-floor-results.txt)
-- [基础包场景](acceptance/round2/installed-base-env.txt)、[openai](acceptance/round2/installed-openai-env.txt)、[openai 2.45.0](acceptance/round2/installed-openai-floor-env.txt)、[otel](acceptance/round2/installed-otel-env.txt)、[组合 extra](acceptance/round2/installed-combined-env.txt)
+- [B01–B07 契约用例](../../../acceptance/round2/test_reacceptance_contracts.py)
+- [全套结果：84 passed](../../../acceptance/round2/full-results.txt) / [JUnit](../../../acceptance/round2/full-results.xml)
+- [契约 10 passed](../../../acceptance/round2/contract-results.txt)
+- [SDK 2.54.0](../../../acceptance/round2/sdk-locked-results.txt)、[SDK 2.45.0](../../../acceptance/round2/sdk-floor-results.txt)
+- [基础包场景](../../../acceptance/round2/installed-base-env.txt)、[openai](../../../acceptance/round2/installed-openai-env.txt)、[openai 2.45.0](../../../acceptance/round2/installed-openai-floor-env.txt)、[otel](../../../acceptance/round2/installed-otel-env.txt)、[组合 extra](../../../acceptance/round2/installed-combined-env.txt)
 
 **6. 未完成项**
 
@@ -86,7 +86,7 @@ wheel 由本次重建的 sdist 构建。
 
 **结论：上一轮 11 个复现用例全部通过，但完整 v0.1 仍不通过验收。** 本轮新增边界用例发现 7 类问题，最终全套结果为 **74 passed、10 failed**。其中真实 OpenAI SDK 的工具请求在 HTTP 发送前失败，回执重放、WAIT 最终化和生命周期仍有阻断问题。
 
-本报告接续[第一轮验收报告](C:/codebase/coresmos/agent-runtime-acceptance-report.md)，保留历史结论。依据仍为集成设计、技术选型和 T01–T15 开发任务。I01–I07 公司内部接入不在本次公共库验收范围内。
+本报告接续[第一轮验收报告](round1-acceptance.md)，保留历史结论。依据仍为集成设计、技术选型和 T01–T15 开发任务。I01–I07 公司内部接入不在本次公共库验收范围内。
 
 **1. 已确认的修复与交付进展**
 
@@ -110,7 +110,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B01 · P1：参考适配器无法发送常规工具 schema 或包含嵌套参数的历史。**
 
-- 位置：[adapters/openai.py:203](C:/codebase/coresmos/src/agent_runtime/adapters/openai.py:203)、[adapters/openai.py:220](C:/codebase/coresmos/src/agent_runtime/adapters/openai.py:220)。关联 T13。
+- 位置：[adapters/openai.py:203](../../../src/agent_runtime/adapters/openai.py:203)、[adapters/openai.py:220](../../../src/agent_runtime/adapters/openai.py:220)。关联 T13。
 - 契约对象将嵌套 JSON 冻结为 MappingProxyType / tuple；适配器仅做顶层 `dict(...)` 转换。`ECHO_TOOL` 的 properties 仍然包含 mappingproxy，历史工具参数中的嵌套对象同样未还原。
 - 复现：普通工具 schema 的 payload 不能进行 JSON 编码；嵌套历史参数在 `request_payload()` 内直接抛出 TypeError。
 - 使用已安装 wheel、真实 OpenAI 2.54.0 和 2.45.0、HTTPX MockTransport 再验证：纯文本对照请求成功，工具 schema 返回 `AdapterError: Object of type mappingproxy is not JSON serializable`，嵌套历史返回同信息的 TypeError；两个失败场景的 HTTP 调用次数均为 0。
@@ -119,7 +119,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B02 · P1：模型输出第一段文本后，适配器 timeout 在 Runtime 中失效。**
 
-- 位置：[adapters/openai.py:158](C:/codebase/coresmos/src/agent_runtime/adapters/openai.py:158)。关联 T03、T13。
+- 位置：[adapters/openai.py:158](../../../src/agent_runtime/adapters/openai.py:158)。关联 T03、T13。
 - 复现：设置适配器 timeout 为 0.05 秒，底层先输出一段文本，再阻塞下一 chunk。在真实默认 Runtime 装配下，0.3 秒后仍未退出，必须手动释放阻塞。
 - 原因：`asyncio.timeout` 跨越异步生成器的 yield，而 Runtime 每次读取下一事件使用新任务；超时绑定的是首次进入上下文的任务，后续等待没有得到相同的保护。
 - 修复要求：让超时所有权与实际等待任务一致，例如对每次读取执行带剩余期限的等待，或由生命周期固定的生产任务承担整个流。验证首包等待、包间静默、取消及关闭，不能只测 SDK create 阶段超时。
@@ -127,7 +127,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B03 · P1：初始应用快照读取失败会遗留 observer-pump 任务。**
 
-- 位置：[runner.py:92](C:/codebase/coresmos/src/agent_runtime/runner.py:92)、[runner.py:137](C:/codebase/coresmos/src/agent_runtime/runner.py:137)。关联 T03、T11、T12。
+- 位置：[runner.py:92](../../../src/agent_runtime/runner.py:92)、[runner.py:137](../../../src/agent_runtime/runner.py:137)。关联 T03、T11、T12。
 - 复现：应用的首次 `current()` 抛出异常；模型调用次数为 0，运行结束后仍有一个 `observer-pump` 在等待队列。
 - 原因：观察者任务已启动，但初始快照读取、能力解析和装配位于 try/finally 之前，失败时不进入资源清理。
 - 修复要求：从创建首个本次运行资源开始保护整个初始化、运行及最终化过程；初始化失败、停止和取消都必须清理已创建的资源。
@@ -135,7 +135,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B04 · P1：回执重放绕过身份校验，并可能返回其他步骤或目标的消息 ID。**
 
-- 位置：[recording.py:324](C:/codebase/coresmos/src/agent_runtime/recording.py:324)、[recording.py:330](C:/codebase/coresmos/src/agent_runtime/recording.py:330)。关联 T04；属于上一轮 A02 的剩余问题。
+- 位置：[recording.py:324](../../../src/agent_runtime/recording.py:324)、[recording.py:330](../../../src/agent_runtime/recording.py:330)。关联 T04；属于上一轮 A02 的剩余问题。
 - 复现一：有效结果已经提交后，复用同一个 logical_op_id 和 payload，但传入错误 run / step / target，调用仍然成功；重放分支在新补的回执核验之前返回。
 - 复现二：同一运行的两个步骤、两个目标都出现 call_id=c1；重放第二步结果，本应返回 `msg:round2:4`，实际返回第一步的 `msg:round2:2`。
 - 原因：重放仅校验 payload，并在全部消息中按 call_id 查找首个匹配，而不是保存和返回该逻辑操作实际提交的完整回执。
@@ -144,7 +144,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B05 · P1：WAIT 事件先于运行状态提交，消费者交接后关闭会丢失最终化。**
 
-- 位置：[runner.py:159](C:/codebase/coresmos/src/agent_runtime/runner.py:159)。关联 T05、T11、T14。
+- 位置：[runner.py:159](../../../src/agent_runtime/runner.py:159)。关联 T05、T11、T14。
 - 复现：工具返回 WAIT；宿主收到 `RunWaiting` 后退出消费并显式关闭 Runtime 流。
 - 实际：发布 WAIT 时 Transcript 的 run_status 为 None。代码在 yield 恢复后才设置 terminal 并提交 WAITING，因此消费者按终态交接后关闭，提交不会发生。
 - 修复要求：在向外发布 RunWaiting 前完成必需最终化；发布失败或最终化失败必须有明确结果。宿主不应为了保证 WAIT 落库而再拉取一次事件。
@@ -152,7 +152,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B06 · P2：观察者收不到 Runner 自己产生的运行终态。**
 
-- 位置：[runner.py:169](C:/codebase/coresmos/src/agent_runtime/runner.py:169)，失败和取消分支也采用相同的直接 yield 方式。关联 T12。
+- 位置：[runner.py:169](../../../src/agent_runtime/runner.py:169)，失败和取消分支也采用相同的直接 yield 方式。关联 T12。
 - 复现：无阻塞、无异常、队列未满的观察者参与一次正常文本运行；消费者收到了 RunSucceeded，观察者没有收到。
 - 原因：`_observe` 用于 RunStarted 和 loop 事件，但 Runner 的成功、失败和取消终态没有进入观察队列。最终 TimingEvent 只有耗时，不能替代运行结果。
 - 修复要求：通过统一的终态发布路径完成观测与外部输出，并补齐成功、失败、取消、CompletedEntry 的关联和终态测试。
@@ -160,7 +160,7 @@ wheel 由本次重建的 sdist 构建。
 
 **B07 · P1：耗尽的尝试预算和恢复入口的 token 预算仍允许模型调用。**
 
-- 位置：[pipelines/model.py:35](C:/codebase/coresmos/src/agent_runtime/pipelines/model.py:35)、[core.py:101](C:/codebase/coresmos/src/agent_runtime/core.py:101)。关联 T02、T05、T08。
+- 位置：[pipelines/model.py:35](../../../src/agent_runtime/pipelines/model.py:35)、[core.py:101](../../../src/agent_runtime/core.py:101)。关联 T02、T05、T08。
 - 复现一：`max_attempts=0, remaining_attempts=0`，仍调用模型 1 次。`max(1, remaining_attempts)` 强行恢复了一次调用额度。
 - 复现二：恢复入口传入 `ConsumedBudget.estimated_tokens=100`，限制 `max_estimated_tokens=10`，仍调用模型 1 次；分配阶段只检查 steps / model_rounds。
 - 修复要求：预算为零或恢复时已超限应在发起请求前结束；明确维护并执行累计 token 预算，不能把 T07 的单次 prompt 预算当作累计执行预算。
@@ -181,12 +181,12 @@ wheel 由本次重建的 sdist 构建。
 
 **4. 复现材料**
 
-- [新增契约用例](C:/codebase/coresmos/acceptance/round2/test_reacceptance_contracts.py)
-- [全套结果：74 passed、10 failed](C:/codebase/coresmos/acceptance/round2/full-results.txt) / [JUnit](C:/codebase/coresmos/acceptance/round2/full-results.xml)
-- [初始 74 项通过及覆盖率](C:/codebase/coresmos/acceptance/round2/baseline-results.txt)
-- [真实 SDK 探针](C:/codebase/coresmos/acceptance/round2/sdk_transport_probe.py)、[2.54.0 结果](C:/codebase/coresmos/acceptance/round2/sdk-locked-results.txt)、[2.45.0 结果](C:/codebase/coresmos/acceptance/round2/sdk-floor-results.txt)
-- [安装制品场景脚本](C:/codebase/coresmos/acceptance/round2/installed_scenes.py)、[组合 extra 场景结果](C:/codebase/coresmos/acceptance/round2/installed-combined-env.txt)
-- [源文件校验清单](C:/codebase/coresmos/acceptance/round2/source-manifest.json)
+- [新增契约用例](../../../acceptance/round2/test_reacceptance_contracts.py)
+- [全套结果：74 passed、10 failed](../../../acceptance/round2/full-results.txt) / [JUnit](../../../acceptance/round2/full-results.xml)
+- [初始 74 项通过及覆盖率](../../../acceptance/round2/baseline-results.txt)
+- [真实 SDK 探针](../../../acceptance/round2/sdk_transport_probe.py)、[2.54.0 结果](../../../acceptance/round2/sdk-locked-results.txt)、[2.45.0 结果](../../../acceptance/round2/sdk-floor-results.txt)
+- [安装制品场景脚本](../../../acceptance/round2/installed_scenes.py)、[组合 extra 场景结果](../../../acceptance/round2/installed-combined-env.txt)
+- [源文件校验清单](../../../acceptance/round2/source-manifest.json)
 
 项目目录中的复现命令：
 

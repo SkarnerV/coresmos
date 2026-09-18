@@ -1,0 +1,42 @@
+........................................................................ [ 66%]
+....................................                                     [100%]
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.13-final-0 _______________
+
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+src\agent_runtime\__init__.py                     4      0   100%
+src\agent_runtime\adapters\__init__.py            0      0   100%
+src\agent_runtime\adapters\openai.py            216     23    89%   50, 68, 92, 129, 142-144, 151-153, 160, 193-194, 228, 248-249, 267, 278, 284, 300, 302, 318, 320, 322
+src\agent_runtime\application.py                 28      8    71%   35-46
+src\agent_runtime\capabilities\__init__.py        3      0   100%
+src\agent_runtime\capabilities\providers.py      94      3    97%   98, 119, 150
+src\agent_runtime\capabilities\schema.py         55      7    87%   29, 38, 49-50, 56-57, 74
+src\agent_runtime\context\__init__.py             4      0   100%
+src\agent_runtime\context\budget.py              76      5    93%   53, 55, 83, 99, 117
+src\agent_runtime\context\compress.py           156     23    85%   37-40, 53, 60, 72, 82-88, 156, 162, 173-179, 220-221, 228, 238, 251
+src\agent_runtime\context\manager.py            118      4    97%   160, 255-257
+src\agent_runtime\contracts.py                  503     11    98%   130-131, 239, 336, 581-582, 587, 591, 760, 764, 768
+src\agent_runtime\core.py                       135     16    88%   62, 79-81, 106, 114, 122, 156, 162, 168, 188, 212, 227, 232-233, 240
+src\agent_runtime\exceptions.py                  19      0   100%
+src\agent_runtime\jsonutil.py                    24      2    92%   20, 35
+src\agent_runtime\lifecycle.py                  199     21    89%   43, 49, 57, 62-63, 169-171, 198-202, 208, 246, 264-268, 274
+src\agent_runtime\observability.py              102     21    79%   57, 67-68, 101-116, 124, 128
+src\agent_runtime\pipelines\__init__.py           4      0   100%
+src\agent_runtime\pipelines\completion.py        33      5    85%   53-54, 58-59, 61
+src\agent_runtime\pipelines\model.py             93      5    95%   37, 115-116, 127, 135
+src\agent_runtime\pipelines\tools.py            114      7    94%   63, 127, 156-157, 199, 213, 224
+src\agent_runtime\policies.py                    20      7    65%   38, 43-45, 49-51
+src\agent_runtime\ports.py                       36      0   100%
+src\agent_runtime\recording.py                  241     18    93%   48, 60, 140, 146, 188, 256-266, 281, 334, 336, 355, 412-416, 455, 527, 575
+src\agent_runtime\runner.py                     171     14    92%   202, 263-276, 300-301, 353, 361, 364, 369, 372-374, 383
+src\agent_runtime\session.py                     35      0   100%
+src\agent_runtime\testing\__init__.py             6      0   100%
+src\agent_runtime\testing\events.py              10      4    60%   10-11, 14, 17
+src\agent_runtime\testing\harness.py            363     10    97%   88, 637, 642, 647, 652, 798-799, 804-805, 814
+src\agent_runtime\testing\models.py              68      6    91%   54, 63-67
+src\agent_runtime\testing\scenarios.py           31      3    90%   68, 70, 72
+src\agent_runtime\testing\tools.py               57      9    84%   79, 102-109
+---------------------------------------------------------------------------
+TOTAL                                          3018    232    92%
+108 passed in 2.03s

@@ -1,0 +1,13 @@
+..F.....                                                                 [100%]
+================================== FAILURES ===================================
+_________ test_activating_another_tool_preserves_the_selected_backend _________
+acceptance\round6\test_fix_followups.py:110: in test_activating_another_tool_preserves_the_selected_backend
+    assert invoked == ["selected-backend", "selected-backend"], f"Activation changed an existing binding: {invoked}"
+E   AssertionError: Activation changed an existing binding: ['selected-backend', 'default']
+E   assert ['selected-ba...d', 'default'] == ['selected-ba...cted-backend']
+E     
+E     At index 1 diff: 'default' != 'selected-backend'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED acceptance/round6/test_fix_followups.py::test_activating_another_tool_preserves_the_selected_backend
+1 failed, 7 passed in 0.28s

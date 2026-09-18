@@ -1,0 +1,64 @@
+{
+  "base_commit": "e21dadf135ccf499aa1eeda30461044d6dc95e5c",
+  "uncommitted_source_changes": true,
+  "changed_since_round6": [
+    "agent_runtime/capabilities/providers.py"
+  ],
+  "source_patch_sha256": "3a248f587a149a08be8761d54e00c4151a530b738dd9286a5c01e3a3284b4d2a",
+  "artifacts": {
+    "agent_runtime-0.1.0-py3-none-any.whl": "c7d07d1dce9f82d9b78b728e80e98b0e2135c83509ab5fe3897068aac61974ed",
+    "agent_runtime-0.1.0.tar.gz": "68fb4b4d5ccb5f1776512bdca2c99a79dcd7aa88dd34db9dd0c3764c5ff68e68"
+  },
+  "source_files": {
+    "agent_runtime/__init__.py": "7ffb4f97a0b935acb90da78e9d55ce92e64f923a1fa494fce1558d1118211ea7",
+    "agent_runtime/adapters/__init__.py": "98cd15258c59e70d6dfbd38dbaf293cb3416bc3acb8f4de28620ab2ca62128fe",
+    "agent_runtime/adapters/openai.py": "19724ae8116391ab162e7ba80d977995f18e1ca2084a225845521ef3b085cecb",
+    "agent_runtime/application.py": "9bb5828c941cbb245358d53b4a3d634af808342352994a89e5287c089b0596cc",
+    "agent_runtime/capabilities/__init__.py": "985a1f0ff6342351d7597d07b60c5fb83345a702c159a0f1fb475a9f537d2247",
+    "agent_runtime/capabilities/providers.py": "3b5e927c4c98673a6e14dfd622f8270c6b644643bac090de2a757c637e76fb11",
+    "agent_runtime/capabilities/schema.py": "1e07c998c841fed47eee9d22f579b200849bd9511b2da3067c990d3f3a06c202",
+    "agent_runtime/context/__init__.py": "6c7828b37358187afd9e0f9e7831d2ed2de99acab18ea11e377aec24fee0854b",
+    "agent_runtime/context/budget.py": "95ea8c2478b6be2a3ec065a95fe38fac8d3f3b4885f0a6257bb8c39cced5b47a",
+    "agent_runtime/context/compress.py": "b9620b1f9a803af8b40c45d37e9cef1b7335d24b0cd588de0ab2d473b44b9ebe",
+    "agent_runtime/context/manager.py": "299a1b2ec76db4aea4942de682a7dbcdeb7c07073a3966887041128a3ee69a7c",
+    "agent_runtime/contracts.py": "9e62bd8f0666ae6c8d6a196318f7ea1daf78690a13d18bf6406df8832de290c4",
+    "agent_runtime/core.py": "af07b2d5acd85539418da3d38121ed7769d898317de7b82b739366c57d24c91b",
+    "agent_runtime/exceptions.py": "2e7041831e3e6fba82c2ce723af0f2f3a7571081e65f104006b98d2706eaf567",
+    "agent_runtime/jsonutil.py": "e626c110452d13287f47c252c0be303a01827f4e4aae1bcabee0dc2aaf773e53",
+    "agent_runtime/lifecycle.py": "1bc606a50ec6cb2dd2e1694cbe5aa894f4254e24b79f74a1fa9a587553043655",
+    "agent_runtime/observability.py": "f19414ef75365c69add4fe1c4404d4e5b593e3d91c7bc336681ddd82be0e0ee9",
+    "agent_runtime/pipelines/__init__.py": "bb9475624b4e7e4d0ad7bfa2db880a677112f41f15a27c61c16aac3b375ce8d8",
+    "agent_runtime/pipelines/completion.py": "9a6ee3ee37f0b46b3f4a150ed3459ab3ed0db21cef448c5c9c28af71a4c91729",
+    "agent_runtime/pipelines/model.py": "27342fb064c08dca16c881ac56b0320dfdf6c8e4cf42168efec2408041bd1a33",
+    "agent_runtime/pipelines/tools.py": "20b73e08ee704706ea827d663521fc77b4bc95fcd0b4a25149814b99d1d6438c",
+    "agent_runtime/policies.py": "202118fd11924753a85fc7ef9830080c445eeb63b94f6aec0713e0ba36601ccc",
+    "agent_runtime/ports.py": "2b4db1dab83b50591f7bf79a01e4b2520cc52a9847c136a094e3424606b3df03",
+    "agent_runtime/recording.py": "e59c73d13bdc19fcf695831e02b13f97df2dece1d376372179caff0b37ebde0f",
+    "agent_runtime/runner.py": "378a80f511cc4b3cdc91129aac7470b24e0c9daf1ea27522daaf31f0384cc042",
+    "agent_runtime/session.py": "b4bfe7ef66d998890a45a58dcf276abd026af99fc4377e07726be96e4e1324f0",
+    "agent_runtime/testing/__init__.py": "6a44a6f8ac57c0128dbd57132819e322732eea1c0de5b51ab04e2e69cdd17c93",
+    "agent_runtime/testing/events.py": "10b003f1dedf4aeeecbe3fe401af5ca21bf7f443d05404323b1be3399bc8c745",
+    "agent_runtime/testing/harness.py": "bc24b8dd1517560ba08733671be679a14d6503481a8fb5d62744f268c5212f8b",
+    "agent_runtime/testing/models.py": "f2740431b450f5234a56fe5d9dd02110f4a3409a7174dfea62e506eb1470d6f2",
+    "agent_runtime/testing/scenarios.py": "779f67ec27dca65d91e974e247587b55a3e0767cbda9800bf7d0eab2bf9ed057",
+    "agent_runtime/testing/tools.py": "587cd349d096bb612876bbaf52cc7dfa341a0e542ebe5788c17d4bca4773f7c1",
+    "agent_runtime/py.typed": "27c09a818f17b9c02642507155b674bfcae5090ebebc41f1b3db5a09efa8251e"
+  },
+  "wheel_matches_source": true,
+  "installed": {
+    "base-env": {
+      "matched_source_files": 33
+    },
+    "openai-env": {
+      "matched_source_files": 33
+    },
+    "otel-env": {
+      "matched_source_files": 33
+    },
+    "combined-env": {
+      "matched_source_files": 33
+    }
+  },
+  "prior_evidence_files_unchanged": 42,
+  "ci_for_this_working_tree": "not_run"
+}

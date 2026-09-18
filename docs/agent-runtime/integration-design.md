@@ -373,7 +373,7 @@ CompletionPort 先提交最终文本和 reasoning，再调用完成政策。默�
 | `agent_runtime/observability.py` | 只读观察者及装饰器 |
 | `agent_runtime/testing/` | 脚本化模型、受控工具、故障注入及契约测试支持 |
 | `examples/` | 合成业务示例与参考模型适配器用法 |
-| `docs/adapter-guide.md` | 内部适配说明，不包含公司业务材料 |
+| `docs/agent-runtime/adapter-guide.md` | 内部适配说明，不包含公司业务材料 |
 
 默认管线承接复杂的通用顺序，内部适配可以优先实现较低层的模型、工具、记录及结果政策接口；不强迫内部 AI 重新实现整条工具批次管线。必须完全接管语义时，才替换整个 ToolBatchPort，并运行完整契约测试。
 

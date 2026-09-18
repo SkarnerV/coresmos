@@ -4,16 +4,16 @@
     "sha256": "20F4CB470CBEFA2FAC3354300110857D40555FB6A95B287BA500FDCC42BF07F5"
   },
   {
-    "path": "agent-runtime-development-tasks.md",
-    "sha256": "C9ECF3BDA12753AF64B2F1FEA21BAE08C50B6729203B68D9C8BF5DFB56F7137F"
+    "path": "docs/agent-runtime/development-tasks.md",
+    "sha256": "0BCA01AD60B4B078F0ABBE1BF4F8F9DF53906B01DCC0BFB0BE23528DDD8B555F"
   },
   {
-    "path": "agent-runtime-integration-design.md",
-    "sha256": "F6CCFD3AA758B620E5D6526BD66ABC49131BB6A97A2FBA3755786C3A6CDDC30E"
+    "path": "docs/agent-runtime/integration-design.md",
+    "sha256": "F735256A7BB2C674D12EC555F465CD3C415513E3FE6A56BC20BD824D7DA7358C"
   },
   {
-    "path": "agent-runtime-technology-selection.md",
-    "sha256": "DD08F955160C2DA1C79432F246EC9009F765A9638CA205E197B4E9E1F5DEC10C"
+    "path": "docs/agent-runtime/technology-selection.md",
+    "sha256": "7614802E9C03F3458F4BC58EB58850A4375D7D1EE761248673BCD0A53EFEE33A"
   },
   {
     "path": "pyproject.toml",

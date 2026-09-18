@@ -1,6 +1,6 @@
 **Agent Runtime 技术选型：独立通用库 v0.1 与公司内部适配**
 
-日期：2026-09-17。依据：[Agent Runtime 集成层设计 v2](C:/codebase/coresmos/agent-runtime-integration-design.md)。
+日期：2026-09-17。依据：[Agent Runtime 集成层设计 v2](integration-design.md)。
 
 本文给出建议采用的技术栈、取舍和验证条件。Unibot 仅作为相近项目的依赖及接入形态参考，不能据此认定公司实际版本、实现和行为完全相同。本次是文档选型，未安装候选依赖、实现 Runtime 或执行集成测试。
 
