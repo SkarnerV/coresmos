@@ -505,9 +505,6 @@ class MemoryTranscript:
                     previous_receipt=previous_receipt,
                 )
                 return tuple(replace(receipt, created=False) for receipt in existing.message_receipts)
-            if not previous_receipt.recording_required:
-                # The batch declared that it is outside the model transcript; nothing to pair.
-                return ()
             committed = self._ops.get(previous_receipt.logical_op_id)
             if committed is None or committed.batch_receipt is None:
                 raise ReceiptMismatchError("previous_receipt is not a committed tool-call batch")
@@ -516,6 +513,9 @@ class MemoryTranscript:
                 raise ReceiptMismatchError("previous_receipt does not match committed batch identity")
             if stored.run_id != run_id or stored.step_no != step_no or stored.record_target != record_target:
                 raise ReceiptMismatchError("previous_receipt is bound to a different run, step, or target")
+            if not stored.recording_required:
+                # The committed batch is outside the model transcript; nothing to pair.
+                return ()
             known = {record.call_id: record for record in stored.calls}
             pending_messages: list[Message] = []
             receipts_out: list[MessageReceipt] = []

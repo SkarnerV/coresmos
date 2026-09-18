@@ -46,6 +46,12 @@ class BindingRegistry:
     def names(self, ref: BindingSetRef) -> frozenset[str]:
         return frozenset(self._versions.get(ref.version, {}))
 
+    def mapping(self, ref: BindingSetRef) -> dict[str, str]:
+        table = self._versions.get(ref.version)
+        if table is None:
+            raise CapabilityError(f"unknown binding set {ref.version}")
+        return dict(table)
+
 
 @runtime_checkable
 class BindingSource(Protocol):
@@ -115,6 +121,11 @@ class ResolverChain:
             if result.kind is MatchKind.NO_MATCH:
                 last = result
                 continue
+            if result.snapshot is not None and isinstance(provider, BindingSource):
+                source = provider.bindings
+                if source is not self._bindings:
+                    binding_ref = self._bindings.publish(source.mapping(result.snapshot.binding_ref))
+                    result = replace(result, snapshot=replace(result.snapshot, binding_ref=binding_ref))
             return result
         return last
 
@@ -143,9 +154,8 @@ class CapabilitySession:
     ) -> CapabilitySnapshot:
         for spec in tools:
             check_tool_spec(spec)
-        previous = self._bindings.names(self._current.binding_ref)
-        mapping = {name: "default" for name in previous}
-        mapping.update({spec.name: "default" for spec in tools})
+        previous = self._bindings.mapping(self._current.binding_ref)
+        mapping = {spec.name: previous.get(spec.name, "default") for spec in tools}
         if extra_bindings:
             mapping.update(extra_bindings)
         binding_ref = self._bindings.publish(mapping)

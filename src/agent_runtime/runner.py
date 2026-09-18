@@ -149,7 +149,13 @@ class DefaultRuntime:
                 control,
                 scope,
             )
-            initial = accept_resolution(await self._provider.resolve(request, snapshot_app))
+            initial = accept_resolution(
+                await wait_cancellable(
+                    self._provider.resolve(request, snapshot_app),
+                    control,
+                    scope,
+                )
+            )
             capabilities = CapabilitySession(initial, self._bindings)
             view = RunView(request=request, record_target=request.record_target)
             ledger = execution_budget(request.limits, request.consumed)

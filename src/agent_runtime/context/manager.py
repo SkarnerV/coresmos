@@ -100,6 +100,29 @@ def contribution_digest(items: Sequence[ContextContribution]) -> str:
     return digest.hexdigest()[:16]
 
 
+def message_digest(messages: Sequence[Message]) -> str:
+    """Hash every field consumed by the compressor for this prompt."""
+    digest = hashlib.sha256()
+    for message in messages:
+        digest.update(
+            repr(
+                (
+                    message.role,
+                    message.content,
+                    tuple(
+                        (call.call_id, call.name, tuple(sorted(call.arguments.items()))) for call in message.tool_calls
+                    ),
+                    message.tool_call_id,
+                    message.name,
+                    message.reasoning,
+                    message.message_id,
+                )
+            ).encode()
+        )
+        digest.update(b"\0")
+    return digest.hexdigest()[:16]
+
+
 @dataclass
 class RunView:
     request: RunRequest
@@ -151,6 +174,7 @@ class DefaultStepProvider:
                 capabilities.version,
                 application.version,
                 contribution_digest(merged),
+                message_digest(prompt),
                 str(available),
             )
         )
